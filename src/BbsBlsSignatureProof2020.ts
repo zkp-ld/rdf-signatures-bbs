@@ -187,6 +187,13 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     // Set the nonce on the derived proof
     derivedProof.nonce = Buffer.from(nonce).toString("base64");
 
+    // FOR DEBUG: output console.log
+    this.logRevealedStatements(
+      transformedInputDocumentStatements,
+      proofStatements,
+      revealDocumentStatements
+    );
+
     //Combine all the input statements that
     //were originally signed to generate the proof
     const allInputStatements: Uint8Array[] = proofStatements
@@ -257,6 +264,13 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
       // back into actual blank node identifiers
       const transformedDocumentStatements = documentStatements.map(element =>
         element.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1")
+      );
+
+      // FOR DEBUG: output console.log
+      this.logVerifiedStatements(
+        proof.proofValue,
+        transformedDocumentStatements,
+        proofStatements
       );
 
       // Combine all the statements to be verified
@@ -447,4 +461,60 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     "sec:BbsBlsSignature2020",
     "https://w3id.org/security#BbsBlsSignature2020"
   ];
+
+  /**
+   * @param documentStatements {string[]} all the document statements (N-Quads)
+   * @param proofStatements {string[]} proof statements (N-Quads)
+   * @param revealedDocumentStatements {string[]} only revealed document statements (N-Quads)
+   *
+   * @returns {void} output revealed statements to console log
+   */
+  private logRevealedStatements(
+    documentStatements: string[],
+    proofStatements: string[],
+    revealedDocumentStatements: string[]
+  ): void {
+    const numberOfProofStatements = proofStatements.length;
+    const transformedRevealedDocumentStatements = revealedDocumentStatements
+      .map(statement =>
+        statement.concat(
+          ` # ${documentStatements.indexOf(statement) +
+            numberOfProofStatements}`
+        )
+      )
+      .map(statement => statement.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1"));
+
+    const numberedProofStatements = proofStatements.map(
+      (statement, i) => `${statement} # ${i}`
+    );
+
+    const allStatements: string[] = numberedProofStatements.concat(
+      transformedRevealedDocumentStatements
+    );
+
+    console.log(`
+# statements to be revealed
+${allStatements.join("\n")}`);
+  }
+
+  /**
+   * @param documentStatements {string[]} all the document statements (N-Quads)
+   * @param proofStatements {string[]} proof statements (N-Quads)
+   *
+   * @returns {void} output revealed statements to console log
+   */
+  private logVerifiedStatements(
+    proofValue: string,
+    documentStatements: string[],
+    proofStatements: string[]
+  ): void {
+    const verifiedStatements = proofStatements.concat(documentStatements);
+
+    console.log(`
+# proofValue (base64-decoded)
+${Buffer.from(proofValue, "base64").toString("hex")}
+
+# statements to be verified
+${verifiedStatements.join("\n")}`);
+  }
 }
