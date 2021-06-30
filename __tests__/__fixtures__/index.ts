@@ -12,6 +12,7 @@
  */
 
 import { customLoader } from "./customDocumentLoader";
+import { expCustomLoader } from "./expCustomDocumentLoader";
 
 import exampleBls12381KeyPair from "./data/exampleBls12381KeyPair.json";
 import exampleEd25519KeyPair from "./data/did_example_b34ca6cd37bbf23_test.json";
@@ -39,6 +40,9 @@ import testPartialProofNestedVcDocument from "./data/test_partial_proof_nested_v
 import testAnonymousVcDocument from "./data/test_anonymous_vc.json";
 import testRevealAnonymousVcDocument from "./data/test_anonymous_vc_reveal_document.json";
 import testNestedAnonymousVcDocument from "./data/test_nested_anonymous_vc_document.json";
+import expExampleBls12381KeyPair from "./data/exp_exampleBls12381KeyPair.json";
+import expVCDocument from "./data/exp_vc.json";
+import expRevealDocument from "./data/exp_reveal_document.json";
 
 export {
   exampleBls12381KeyPair,
@@ -67,5 +71,9 @@ export {
   customLoader,
   testAnonymousVcDocument,
   testRevealAnonymousVcDocument,
-  testNestedAnonymousVcDocument
+  testNestedAnonymousVcDocument,
+  expExampleBls12381KeyPair,
+  expVCDocument,
+  expRevealDocument,
+  expCustomLoader
 };
