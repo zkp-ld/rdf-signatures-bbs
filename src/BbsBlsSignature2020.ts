@@ -165,6 +165,15 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
       })
     ).map(item => new Uint8Array(Buffer.from(item)));
 
+    // FOR DEBUG: output console.log
+    await this.logSignedStatements({
+      document,
+      proof,
+      documentLoader,
+      expansionMap,
+      compactProof
+    });
+
     // sign data
     proof = await this.sign({
       verifyData,
@@ -175,6 +184,25 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
     });
 
     return proof;
+  }
+
+  /**
+   * @param options {CreateVerifyDataOptions} options to create verify data
+   *
+   * @returns {void} output signed statements to console log
+   */
+  private async logSignedStatements(
+    options: CreateVerifyDataOptions
+  ): Promise<void> {
+    const signedStatements: string[] = await this.createVerifyData(options);
+
+    const numberedSignedStatements: string[] = signedStatements.map(
+      (statements, i) => `${statements} # ${i}`
+    );
+
+    console.log(`
+# statements to be signed/verified
+${numberedSignedStatements.join("\n")}`);
   }
 
   /**
@@ -196,6 +224,15 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
           compactProof: false
         })
       ).map(item => new Uint8Array(Buffer.from(item)));
+
+      // FOR DEBUG: output console.log
+      await this.logSignedStatements({
+        document,
+        proof,
+        documentLoader,
+        expansionMap,
+        compactProof: false
+      });
 
       // fetch verification method
       const verificationMethod = await this.getVerificationMethod({
