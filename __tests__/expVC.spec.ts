@@ -5,7 +5,11 @@ import {
   expCustomLoader
 } from "./__fixtures__";
 
-import { Bls12381G2KeyPair } from "../src/index";
+import {
+  BbsBlsSignature2020,
+  BbsBlsSignatureProof2020,
+  Bls12381G2KeyPair
+} from "../src/index";
 import { signDeriveVerify } from "./utils";
 
 const expKey = new Bls12381G2KeyPair(expExampleBls12381KeyPair);
@@ -17,7 +21,9 @@ describe("experimental verifiable credentials", () => {
       expRevealDocument,
       {},
       expKey,
-      expCustomLoader
+      expCustomLoader,
+      BbsBlsSignature2020,
+      BbsBlsSignatureProof2020
     );
   });
 });

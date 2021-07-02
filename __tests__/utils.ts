@@ -1,9 +1,5 @@
 import jsigs from "jsonld-signatures";
-import {
-  BbsBlsSignature2020,
-  BbsBlsSignatureProof2020,
-  deriveProof
-} from "../src/index";
+import { deriveProof } from "../src/index";
 import { getProofs } from "../src/utilities";
 
 export const signDeriveVerify = async (
@@ -11,7 +7,9 @@ export const signDeriveVerify = async (
   reveal: any,
   subject: any,
   key: any,
-  customLoader: any
+  customLoader: any,
+  signSuite: any,
+  proofSuite: any
 ) => {
   console.log(`
 # Issuer: prepare Credential to be signed:
@@ -19,7 +17,7 @@ ${JSON.stringify(vc, null, 2)}`);
 
   // Issuer issues VC
   const signedVc = await jsigs.sign(vc, {
-    suite: new BbsBlsSignature2020({ key }),
+    suite: new signSuite({ key }),
     purpose: new jsigs.purposes.AssertionProofPurpose(),
     documentLoader: customLoader,
     expansionMap: false,
@@ -33,7 +31,7 @@ ${JSON.stringify(signedVc, null, 2)}`);
 
   // Holder verifies VC
   const verifiedVc = await jsigs.verify(signedVc, {
-    suite: new BbsBlsSignature2020(),
+    suite: new signSuite(),
     purpose: new jsigs.purposes.AssertionProofPurpose(),
     documentLoader: customLoader,
     expansionMap: false,
@@ -51,7 +49,7 @@ ${JSON.stringify(reveal, null, 2)}`);
 
   // Holder derives Proof
   const derivedProof = await deriveProof(signedVc, reveal, {
-    suite: new BbsBlsSignatureProof2020(),
+    suite: new proofSuite(),
     documentLoader: customLoader
   });
   //expect(derivedProof.credentialSubject).toEqual(subject);
@@ -64,10 +62,10 @@ ${JSON.stringify(derivedProof, null, 2)}`);
   // Verifier verifies proof
   const { document, proofs } = await getProofs({
     document: derivedProof,
-    proofType: BbsBlsSignatureProof2020.proofType,
+    proofType: proofSuite.proofType,
     documentLoader: customLoader
   });
-  const suite = new BbsBlsSignatureProof2020();
+  const suite = new proofSuite();
   const result = await suite.verifyProof({
     document,
     proof: proofs[0],
