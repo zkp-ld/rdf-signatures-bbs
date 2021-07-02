@@ -4,7 +4,7 @@ import rdfCanonize from "rdf-canonize";
 const NQuads = rdfCanonize.NQuads;
 
 export class BbsBlsSignatureTermwise2020 extends BbsBlsSignature2020 {
-  constructor(options: SignatureSuiteOptions) {
+  constructor(options: SignatureSuiteOptions = {}) {
     super(options);
   }
 
