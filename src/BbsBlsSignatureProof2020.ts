@@ -456,7 +456,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
    *
    * @returns {void} output revealed statements to console log
    */
-  private logRevealedStatements(
+  logRevealedStatements(
     documentStatements: string[],
     proofStatements: string[],
     revealedDocumentStatements: string[]
@@ -490,7 +490,7 @@ ${allStatements.join("\n")}`);
    *
    * @returns {void} output revealed statements to console log
    */
-  private logVerifiedStatements(
+  logVerifiedStatements(
     proofValue: string,
     documentStatements: string[],
     proofStatements: string[]
