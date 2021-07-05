@@ -23,7 +23,6 @@ import {
   CanonizeOptions,
   CanonicalizeOptions,
   CanonicalizeResult,
-  SkolemizeOptions,
   SkolemizeResult,
   RevealOptions,
   RevealResult
@@ -448,7 +447,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     revealedDocumentStatements: string[]
   ): void {
     const numberOfProofStatements = proofStatements.length;
-    const transformedRevealedDocumentStatements = revealedDocumentStatements
+    const skolemizedRevealedDocumentStatements = revealedDocumentStatements
       .map(statement =>
         statement.concat(
           ` # ${documentStatements.indexOf(statement) +
@@ -462,7 +461,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     );
 
     const allStatements: string[] = numberedProofStatements.concat(
-      transformedRevealedDocumentStatements
+      skolemizedRevealedDocumentStatements
     );
 
     console.log(`
@@ -491,7 +490,15 @@ ${Buffer.from(proofValue, "base64").toString("hex")}
 ${verifiedStatements.join("\n")}`);
   }
 
-  // canonicalize: get N-Quads from JSON-LD
+  /**
+   * Get canonical N-Quads from JSON-LD
+   *
+   * @param document to canonicalize
+   * @param proof to canonicalize
+   * @param options to create verify data
+   *
+   * @returns {Promise<CanonicalizeResult>} canonicalized statements
+   */
   async canonicalize(
     document: string,
     proof: string,
@@ -524,7 +531,13 @@ ${verifiedStatements.join("\n")}`);
     return { documentStatements, proofStatements };
   }
 
-  // skolemize: name all the blank nodes
+  /**
+   * Name all the blank nodes
+   *
+   * @param documentStatements to skolemize
+   *
+   * @returns {Promise<SkolemizeResult>} skolemized JSON-LD document and statements
+   */
   async skolemize(documentStatements: string[]): Promise<SkolemizeResult> {
     // Transform any blank node identifiers for the input
     // document statements into actual node identifiers
@@ -541,7 +554,15 @@ ${verifiedStatements.join("\n")}`);
     return { skolemizedDocument, skolemizedDocumentStatements };
   }
 
-  // reveal: extract revealed parts using JSON-LD Framing
+  /**
+   * Extract revealed parts using JSON-LD Framing
+   *
+   * @param skolemizedDocument JSON-LD document
+   * @param revealDocument JSON-LD frame
+   * @param options for framing and createVerifyData
+   *
+   * @returns {Promise<RevealResult>} revealed JSON-LD document and statements
+   */
   async reveal(
     skolemizedDocument: string,
     revealDocument: string,
@@ -568,8 +589,17 @@ ${verifiedStatements.join("\n")}`);
     return { revealedDocument, revealedDocumentStatements };
   }
 
+  /**
+   * Calculate reveal indicies
+   *
+   * @param skolemizedDocumentStatements full document statements
+   * @param revealedDocumentStatements revealed document statements
+   * @param proofStatements proof statements
+   *
+   * @returns {Promise<RevealResult>} revealed JSON-LD document and statements
+   */
   getIndicies(
-    skolemiedDocumentStatements: string[],
+    skolemizedDocumentStatements: string[],
     revealedDocumentStatements: string[],
     proofStatements: string[]
   ): number[] {
@@ -585,7 +615,7 @@ ${verifiedStatements.join("\n")}`);
 
     //Reveal the statements indicated from the reveal document
     const documentRevealIndicies = revealedDocumentStatements.map(
-      key => skolemiedDocumentStatements.indexOf(key) + numberOfProofStatements
+      key => skolemizedDocumentStatements.indexOf(key) + numberOfProofStatements
     );
 
     // Check there is not a mismatch
