@@ -26,3 +26,9 @@ export { DidDocumentPublicKey } from "./DidDocumentPublicKey";
 export { GetProofsOptions } from "./GetProofsOptions";
 export { GetProofsResult } from "./GetProofsResult";
 export { GetTypeOptions } from "./GetTypeOptions";
+export {
+  SkolemizeOptions,
+  SkolemizeResult,
+  RevealOptions,
+  RevealResult
+} from "./BbsBlsSignatureProof2020AdditionalTypes";
