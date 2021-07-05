@@ -13,11 +13,7 @@
 
 import { suites } from "jsonld-signatures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Options for creating a proof
- */
-export interface SkolemizeOptions {
+export interface CanonicalizeOptions {
   /**
    * The signature suite
    */
@@ -36,15 +32,7 @@ export interface SkolemizeOptions {
   readonly skipProofCompaction?: boolean;
 }
 
-export interface SkolemizeResult {
-  /**
-   * Skolemized document (JSON-LD)
-   */
-  compactInputProofDocument: string;
-  /**
-   * Skolemized document (array of quads)
-   */
-  transformedInputDocumentStatements: string[];
+export interface CanonicalizeResult {
   /**
    * document statements (array of quads)
    */
@@ -53,6 +41,59 @@ export interface SkolemizeResult {
    * proof statements (array of quads)
    */
   proofStatements: string[];
+}
+
+export interface SkolemizeResult {
+  /**
+   * Skolemized document (JSON-LD)
+   */
+  skolemizedDocument: string;
+  /**
+   * Skolemized document (array of quads)
+   */
+  skolemizedDocumentStatements: string[];
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Options for creating a proof
+ */
+export interface CanonizeAndSkolemizeOptions {
+  /**
+   * The signature suite
+   */
+  readonly suite: suites.LinkedDataProof;
+  /**
+   * Optional custom document loader
+   */
+  documentLoader?: Function;
+  /**
+   * Optional expansion map
+   */
+  expansionMap?: Function;
+  /**
+   * Indicates whether to compact the resulting proof
+   */
+  readonly skipProofCompaction?: boolean;
+}
+
+export interface CanonizeAndSkolemizeResult {
+  /**
+   * document statements (array of quads)
+   */
+  documentStatements: string[];
+  /**
+   * proof statements (array of quads)
+   */
+  proofStatements: string[];
+  /**
+   * Skolemized document (JSON-LD)
+   */
+  skolemizedDocument: string;
+  /**
+   * Skolemized document (array of quads)
+   */
+  skolemizedDocumentStatements: string[];
 }
 
 export interface RevealOptions {
@@ -74,9 +115,9 @@ export interface RevealResult {
   /**
    * Revealed document (JSON-LD)
    */
-  revealDocumentResult: any;
+  revealedDocument: any;
   /**
    * Revealed document statements (array of quads)
    */
-  revealDocumentStatements: string[];
+  revealedDocumentStatements: string[];
 }

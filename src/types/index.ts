@@ -27,6 +27,8 @@ export { GetProofsOptions } from "./GetProofsOptions";
 export { GetProofsResult } from "./GetProofsResult";
 export { GetTypeOptions } from "./GetTypeOptions";
 export {
+  CanonicalizeOptions,
+  CanonicalizeResult,
   SkolemizeOptions,
   SkolemizeResult,
   RevealOptions,
