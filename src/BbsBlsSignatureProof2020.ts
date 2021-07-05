@@ -20,6 +20,8 @@ import {
   VerifyProofOptions,
   CreateVerifyDataOptions,
   CanonizeOptions,
+  CanonicalizeOptions,
+  CanonicalizeResult,
   SkolemizeOptions,
   SkolemizeResult,
   RevealOptions,
@@ -113,33 +115,39 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     // ensure proof type is set
     derivedProof.type = this.type;
 
+    // canonicalize: get N-Quads from JSON-LD
+    const { documentStatements, proofStatements } = await this.canonicalize(
+      document,
+      proof,
+      {
+        suite,
+        documentLoader,
+        expansionMap,
+        skipProofCompaction
+      }
+    );
+
     // skolemize: name all the blank nodes
     const {
-      compactInputProofDocument,
-      transformedInputDocumentStatements,
-      documentStatements,
-      proofStatements
-    } = await this.skolemize(document, proof, {
-      suite,
-      documentLoader,
-      expansionMap,
-      skipProofCompaction
-    });
+      skolemizedDocument,
+      skolemizedDocumentStatements
+    } = await this.skolemize(documentStatements);
 
     // reveal: extract revealed parts using JSON-LD Framing
-    const {
-      revealDocumentResult,
-      revealDocumentStatements
-    } = await this.reveal(compactInputProofDocument, revealDocument, {
-      suite,
-      documentLoader,
-      expansionMap
-    });
+    const { revealedDocument, revealedDocumentStatements } = await this.reveal(
+      skolemizedDocument,
+      revealDocument,
+      {
+        suite,
+        documentLoader,
+        expansionMap
+      }
+    );
 
     // getIndicies: calculate reveal indicies
     const revealIndicies = this.getIndicies(
-      transformedInputDocumentStatements,
-      revealDocumentStatements,
+      skolemizedDocumentStatements,
+      revealedDocumentStatements,
       proofStatements
     );
 
@@ -153,9 +161,9 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
 
     // FOR DEBUG: output console.log
     this.logRevealedStatements(
-      transformedInputDocumentStatements,
+      skolemizedDocumentStatements,
       proofStatements,
-      revealDocumentStatements
+      revealedDocumentStatements
     );
 
     //Combine all the input statements that
@@ -193,7 +201,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     derivedProof.created = proof.created;
 
     return {
-      document: { ...revealDocumentResult },
+      document: { ...revealedDocument },
       proof: derivedProof
     };
   }
@@ -470,12 +478,12 @@ ${Buffer.from(proofValue, "base64").toString("hex")}
 ${verifiedStatements.join("\n")}`);
   }
 
-  // skolemize: name all the blank nodes
-  async skolemize(
+  // canonicalize: get N-Quads from JSON-LD
+  async canonicalize(
     document: string,
     proof: string,
-    options: SkolemizeOptions
-  ): Promise<SkolemizeResult> {
+    options: CanonicalizeOptions
+  ): Promise<CanonicalizeResult> {
     const {
       suite,
       documentLoader,
@@ -500,56 +508,56 @@ ${verifiedStatements.join("\n")}`);
       compactProof: !skipProofCompaction
     });
 
+    return { documentStatements, proofStatements };
+  }
+
+  // skolemize: name all the blank nodes
+  async skolemize(documentStatements: string[]): Promise<SkolemizeResult> {
     // Transform any blank node identifiers for the input
     // document statements into actual node identifiers
     // e.g _:c14n0 => urn:bnid:_:c14n0
-    const transformedInputDocumentStatements = documentStatements.map(element =>
+    const skolemizedDocumentStatements = documentStatements.map(element =>
       element.replace(/(_:c14n[0-9]+)/g, "<urn:bnid:$1>")
     );
 
     // Transform the resulting RDF statements back into JSON-LD
-    const compactInputProofDocument: string = await jsonld.fromRDF(
-      transformedInputDocumentStatements.join("\n")
+    const skolemizedDocument: string = await jsonld.fromRDF(
+      skolemizedDocumentStatements.join("\n")
     );
 
-    return {
-      compactInputProofDocument,
-      transformedInputDocumentStatements,
-      documentStatements,
-      proofStatements
-    };
+    return { skolemizedDocument, skolemizedDocumentStatements };
   }
 
   // reveal: extract revealed parts using JSON-LD Framing
   async reveal(
-    compactInputProofDocument: string,
+    skolemizedDocument: string,
     revealDocument: string,
     options: RevealOptions
   ): Promise<RevealResult> {
     const { suite, documentLoader, expansionMap } = options;
 
     // Frame the result to create the reveal document result
-    const revealDocumentResult = await jsonld.frame(
-      compactInputProofDocument,
+    const revealedDocument = await jsonld.frame(
+      skolemizedDocument,
       revealDocument,
       { documentLoader }
     );
 
     // Canonicalize the resulting reveal document
-    const revealDocumentStatements = await suite.createVerifyDocumentData(
-      revealDocumentResult,
+    const revealedDocumentStatements = await suite.createVerifyDocumentData(
+      revealedDocument,
       {
         documentLoader,
         expansionMap
       }
     );
 
-    return { revealDocumentResult, revealDocumentStatements };
+    return { revealedDocument, revealedDocumentStatements };
   }
 
   getIndicies(
-    transformedInputDocumentStatements: string[],
-    revealDocumentStatements: string[],
+    skolemiedDocumentStatements: string[],
+    revealedDocumentStatements: string[],
     proofStatements: string[]
   ): number[] {
     //Get the indicies of the revealed statements from the transformed input document offset
@@ -563,14 +571,12 @@ ${verifiedStatements.join("\n")}`);
     );
 
     //Reveal the statements indicated from the reveal document
-    const documentRevealIndicies = revealDocumentStatements.map(
-      key =>
-        transformedInputDocumentStatements.indexOf(key) +
-        numberOfProofStatements
+    const documentRevealIndicies = revealedDocumentStatements.map(
+      key => skolemiedDocumentStatements.indexOf(key) + numberOfProofStatements
     );
 
     // Check there is not a mismatch
-    if (documentRevealIndicies.length !== revealDocumentStatements.length) {
+    if (documentRevealIndicies.length !== revealedDocumentStatements.length) {
       throw new Error(
         "Some statements in the reveal document not found in original proof"
       );
