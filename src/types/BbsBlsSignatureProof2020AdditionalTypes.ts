@@ -54,48 +54,6 @@ export interface SkolemizeResult {
   skolemizedDocumentStatements: string[];
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Options for creating a proof
- */
-export interface CanonizeAndSkolemizeOptions {
-  /**
-   * The signature suite
-   */
-  readonly suite: suites.LinkedDataProof;
-  /**
-   * Optional custom document loader
-   */
-  documentLoader?: Function;
-  /**
-   * Optional expansion map
-   */
-  expansionMap?: Function;
-  /**
-   * Indicates whether to compact the resulting proof
-   */
-  readonly skipProofCompaction?: boolean;
-}
-
-export interface CanonizeAndSkolemizeResult {
-  /**
-   * document statements (array of quads)
-   */
-  documentStatements: string[];
-  /**
-   * proof statements (array of quads)
-   */
-  proofStatements: string[];
-  /**
-   * Skolemized document (JSON-LD)
-   */
-  skolemizedDocument: string;
-  /**
-   * Skolemized document (array of quads)
-   */
-  skolemizedDocumentStatements: string[];
-}
-
 export interface RevealOptions {
   /**
    * The signature suite
