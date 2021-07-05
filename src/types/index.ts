@@ -29,7 +29,6 @@ export { GetTypeOptions } from "./GetTypeOptions";
 export {
   CanonicalizeOptions,
   CanonicalizeResult,
-  SkolemizeOptions,
   SkolemizeResult,
   RevealOptions,
   RevealResult

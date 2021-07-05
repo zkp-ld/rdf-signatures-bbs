@@ -11,13 +11,12 @@
  * limitations under the License.
  */
 
-import { suites } from "jsonld-signatures";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CanonicalizeOptions {
   /**
    * The signature suite
    */
-  readonly suite: suites.LinkedDataProof;
+  readonly suite: any;
   /**
    * Optional custom document loader
    */
@@ -58,7 +57,7 @@ export interface RevealOptions {
   /**
    * The signature suite
    */
-  readonly suite: suites.LinkedDataProof;
+  readonly suite: any;
   /**
    * Optional custom document loader
    */
