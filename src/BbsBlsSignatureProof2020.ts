@@ -165,12 +165,6 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
       revealedDocumentStatements
     );
 
-    //Combine all the input statements that
-    //were originally signed to generate the proof
-    const allInputStatements: Uint8Array[] = proofStatements
-      .concat(documentStatements)
-      .map((item: string) => new Uint8Array(Buffer.from(item)));
-
     // Fetch the verification method
     const verificationMethod = await this.getVerificationMethod({
       proof,
@@ -182,14 +176,15 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     // Construct a key pair class from the returned verification method
     const key = await this.LDKeyClass.from(verificationMethod);
 
-    // Compute the proof
-    const outputProof = await blsCreateProof({
-      signature: new Uint8Array(signature),
-      publicKey: new Uint8Array(key.publicKeyBuffer),
-      messages: allInputStatements,
-      nonce: nonce,
-      revealed: revealIndicies
-    });
+    // createProof: create BBS+ proof
+    const outputProof = await this.createProof(
+      documentStatements,
+      proofStatements,
+      nonce,
+      revealIndicies,
+      signature,
+      key.publicKeyBuffer
+    );
 
     // Set the proof value on the derived proof
     derivedProof.proofValue = Buffer.from(outputProof).toString("base64");
@@ -614,5 +609,41 @@ ${verifiedStatements.join("\n")}`);
 
     // Combine all indicies to get the resulting list of revealed indicies
     return proofRevealIndicies.concat(documentRevealIndicies);
+  }
+
+  /**
+   * Create BBS+ proof
+   *
+   * @param documentStatements full document statements
+   * @param proofStatements proof statements
+   * @param nonce nonce to prevent replay attacks
+   * @param revealIndicies indicies to indicate revealed statements
+   * @param signature original BBS+ signature
+   * @param issuerPublicKey issuer's public key
+   *
+   * @returns {Promise<Uint8Array>} derived proof value
+   */
+  async createProof(
+    documentStatements: string[],
+    proofStatements: string[],
+    nonce: Uint8Array,
+    revealIndicies: number[],
+    signature: Buffer,
+    issuerPublicKey: Buffer
+  ): Promise<Uint8Array> {
+    // Combine all the input statements that
+    // were originally signed to generate the proof
+    const allInputStatements: Uint8Array[] = proofStatements
+      .concat(documentStatements)
+      .map((item: string) => new Uint8Array(Buffer.from(item)));
+
+    // Compute the proof
+    return await blsCreateProof({
+      signature: new Uint8Array(signature),
+      publicKey: new Uint8Array(issuerPublicKey),
+      messages: allInputStatements,
+      nonce: nonce,
+      revealed: revealIndicies
+    });
   }
 }
