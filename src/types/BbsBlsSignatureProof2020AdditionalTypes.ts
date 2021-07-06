@@ -11,12 +11,15 @@
  * limitations under the License.
  */
 
+import { BbsBlsSignature2020 } from "src/BbsBlsSignature2020";
+import { Statement } from "./Statement";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CanonicalizeOptions {
   /**
    * The signature suite
    */
-  readonly suite: any;
+  readonly suite: BbsBlsSignature2020;
   /**
    * Optional custom document loader
    */
@@ -35,11 +38,11 @@ export interface CanonicalizeResult {
   /**
    * document statements (array of quads)
    */
-  documentStatements: string[];
+  documentStatements: Statement[];
   /**
    * proof statements (array of quads)
    */
-  proofStatements: string[];
+  proofStatements: Statement[];
 }
 
 export interface SkolemizeResult {
@@ -50,14 +53,14 @@ export interface SkolemizeResult {
   /**
    * Skolemized document (array of quads)
    */
-  skolemizedDocumentStatements: string[];
+  skolemizedDocumentStatements: Statement[];
 }
 
 export interface RevealOptions {
   /**
    * The signature suite
    */
-  readonly suite: any;
+  readonly suite: BbsBlsSignature2020;
   /**
    * Optional custom document loader
    */
@@ -76,5 +79,5 @@ export interface RevealResult {
   /**
    * Revealed document statements (array of quads)
    */
-  revealedDocumentStatements: string[];
+  revealedDocumentStatements: Statement[];
 }
