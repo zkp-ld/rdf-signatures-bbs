@@ -24,7 +24,8 @@ import {
   CanonicalizeResult,
   SkolemizeResult,
   RevealOptions,
-  RevealResult
+  RevealResult,
+  Statement
 } from "./types";
 import { BbsBlsSignature2020 } from "./BbsBlsSignature2020";
 import { randomBytes } from "@stablelib/random";
@@ -94,10 +95,10 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     //Extract the BBS signature from the input proof
     const signature = Buffer.from(proof[this.proofSignatureKey], "base64");
 
-    //Initialize the BBS signature suite
-    const suite = new BbsBlsSignature2020();
+    // Initialize the signature suite
+    const suite = this.initializeSuite();
 
-    //Initialize the derived proof
+    // Initialize the derived proof
     let derivedProof;
     if (this.proof) {
       // use proof JSON-LD document passed to API
@@ -424,17 +425,16 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
    * @returns {void} output revealed statements to console log
    */
   logRevealedStatements(
-    documentStatements: string[],
-    proofStatements: string[],
-    revealedDocumentStatements: string[]
+    documentStatements: Statement[],
+    proofStatements: Statement[],
+    revealedDocumentStatements: Statement[]
   ): void {
     const numberOfProofStatements = proofStatements.length;
     const skolemizedRevealedDocumentStatements = revealedDocumentStatements
-      .map(statement =>
-        statement.concat(
-          ` # ${documentStatements.indexOf(statement) +
+      .map(
+        statement =>
+          `${statement} # ${documentStatements.indexOf(statement) +
             numberOfProofStatements}`
-        )
       )
       .map(statement => statement.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1"));
 
@@ -473,6 +473,15 @@ ${verifiedStatements.join("\n")}`);
   }
 
   /**
+   * Initialize signature suite
+   *
+   * @returns signature suite
+   */
+  initializeSuite(): BbsBlsSignature2020 {
+    return new BbsBlsSignature2020();
+  }
+
+  /**
    * Get canonical N-Quads from JSON-LD
    *
    * @param document to canonicalize
@@ -494,7 +503,7 @@ ${verifiedStatements.join("\n")}`);
     } = options;
 
     // Get the input document statements
-    const documentStatements: string[] = await suite.createVerifyDocumentData(
+    const documentStatements: Statement[] = await suite.createVerifyDocumentData(
       document,
       {
         documentLoader,
@@ -504,11 +513,14 @@ ${verifiedStatements.join("\n")}`);
     );
 
     // Get the proof statements
-    const proofStatements: string[] = await suite.createVerifyProofData(proof, {
-      documentLoader,
-      expansionMap,
-      compactProof: !skipProofCompaction
-    });
+    const proofStatements: Statement[] = await suite.createVerifyProofData(
+      proof,
+      {
+        documentLoader,
+        expansionMap,
+        compactProof: !skipProofCompaction
+      }
+    );
 
     return { documentStatements, proofStatements };
   }
@@ -520,12 +532,12 @@ ${verifiedStatements.join("\n")}`);
    *
    * @returns {Promise<SkolemizeResult>} skolemized JSON-LD document and statements
    */
-  async skolemize(documentStatements: string[]): Promise<SkolemizeResult> {
+  async skolemize(documentStatements: Statement[]): Promise<SkolemizeResult> {
     // Transform any blank node identifiers for the input
     // document statements into actual node identifiers
     // e.g _:c14n0 => urn:bnid:_:c14n0
     const skolemizedDocumentStatements = documentStatements.map(element =>
-      element.replace(/(_:c14n[0-9]+)/g, "<urn:bnid:$1>")
+      element.skolemize()
     );
 
     // Transform the resulting RDF statements back into JSON-LD
@@ -581,9 +593,9 @@ ${verifiedStatements.join("\n")}`);
    * @returns {Promise<RevealResult>} revealed JSON-LD document and statements
    */
   getIndicies(
-    skolemizedDocumentStatements: string[],
-    revealedDocumentStatements: string[],
-    proofStatements: string[]
+    skolemizedDocumentStatements: Statement[],
+    revealedDocumentStatements: Statement[],
+    proofStatements: Statement[]
   ): number[] {
     //Get the indicies of the revealed statements from the transformed input document offset
     //by the number of proof statements
@@ -597,7 +609,10 @@ ${verifiedStatements.join("\n")}`);
 
     //Reveal the statements indicated from the reveal document
     const documentRevealIndicies = revealedDocumentStatements.map(
-      key => skolemizedDocumentStatements.indexOf(key) + numberOfProofStatements
+      key =>
+        skolemizedDocumentStatements.findIndex(
+          e => e.toString() === key.toString()
+        ) + numberOfProofStatements
     );
 
     // Check there is not a mismatch
@@ -624,8 +639,8 @@ ${verifiedStatements.join("\n")}`);
    * @returns {Promise<Uint8Array>} derived proof value
    */
   async createProof(
-    documentStatements: string[],
-    proofStatements: string[],
+    documentStatements: Statement[],
+    proofStatements: Statement[],
     nonce: Uint8Array,
     revealIndicies: number[],
     signature: Buffer,
@@ -635,7 +650,7 @@ ${verifiedStatements.join("\n")}`);
     // were originally signed to generate the proof
     const allInputStatements: Uint8Array[] = proofStatements
       .concat(documentStatements)
-      .map((item: string) => new Uint8Array(Buffer.from(item)));
+      .flatMap((item: Statement) => item.serialize());
 
     // Compute the proof
     return await blsCreateProof({

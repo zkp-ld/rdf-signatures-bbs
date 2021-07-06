@@ -21,7 +21,9 @@ import {
   CreateVerifyDataOptions,
   VerifyProofOptions,
   VerifySignatureOptions,
-  SuiteSignOptions
+  SuiteSignOptions,
+  Statement,
+  StringStatement
 } from "./types";
 import { w3cDate } from "./utilities";
 import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
@@ -163,7 +165,7 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
         expansionMap,
         compactProof
       })
-    ).map(item => new Uint8Array(Buffer.from(item)));
+    ).flatMap((item: Statement) => item.serialize());
 
     // FOR DEBUG: output console.log
     await this.logSignedStatements({
@@ -194,7 +196,7 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
   private async logSignedStatements(
     options: CreateVerifyDataOptions
   ): Promise<void> {
-    const signedStatements: string[] = await this.createVerifyData(options);
+    const signedStatements: Statement[] = await this.createVerifyData(options);
 
     const numberedSignedStatements: string[] = signedStatements.map(
       (statements, i) => `${statements} # ${i}`
@@ -223,7 +225,7 @@ ${numberedSignedStatements.join("\n")}`);
           expansionMap,
           compactProof: false
         })
-      ).map(item => new Uint8Array(Buffer.from(item)));
+      ).flatMap((item: Statement) => item.serialize());
 
       // FOR DEBUG: output console.log
       await this.logSignedStatements({
@@ -299,9 +301,11 @@ ${numberedSignedStatements.join("\n")}`);
   /**
    * @param document {CreateVerifyDataOptions} options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
-  async createVerifyData(options: CreateVerifyDataOptions): Promise<string[]> {
+  async createVerifyData(
+    options: CreateVerifyDataOptions
+  ): Promise<Statement[]> {
     const { proof, document, documentLoader, expansionMap } = options;
 
     const proofStatements = await this.createVerifyProofData(proof, {
@@ -321,36 +325,42 @@ ${numberedSignedStatements.join("\n")}`);
    * @param proof to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyProofData(
     proof: any,
     { documentLoader, expansionMap }: any
-  ): Promise<string[]> {
+  ): Promise<Statement[]> {
     const c14nProofOptions = await this.canonizeProof(proof, {
       documentLoader,
       expansionMap
     });
 
-    return c14nProofOptions.split("\n").filter(_ => _.length > 0);
+    return c14nProofOptions
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map(s => new StringStatement(s));
   }
 
   /**
    * @param document to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyDocumentData(
     document: any,
     { documentLoader, expansionMap }: any
-  ): Promise<string[]> {
+  ): Promise<Statement[]> {
     const c14nDocument = await this.canonize(document, {
       documentLoader,
       expansionMap
     });
 
-    return c14nDocument.split("\n").filter(_ => _.length > 0);
+    return c14nDocument
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map(s => new StringStatement(s));
   }
 
   /**

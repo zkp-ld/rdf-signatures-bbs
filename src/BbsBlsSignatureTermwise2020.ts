@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BbsBlsSignature2020 } from "./BbsBlsSignature2020";
-import { SignatureSuiteOptions } from "./types";
-import rdfCanonize from "rdf-canonize";
-const NQuads = rdfCanonize.NQuads;
+import { SignatureSuiteOptions, Statement } from "./types";
+import { TermwiseStatement } from "./types/Statement";
 
 export class BbsBlsSignatureTermwise2020 extends BbsBlsSignature2020 {
   constructor(options: SignatureSuiteOptions = {}) {
@@ -11,30 +11,25 @@ export class BbsBlsSignatureTermwise2020 extends BbsBlsSignature2020 {
   /**
    * @param c14nStatements {string} canonized RDF N-Quads as a string
    *
-   * @returns {string[]} a flatten array of [subject, predicate, object, graph]s
+   * @returns {string[][]} an array of [subject, predicate, object, graph]s
    */
-  private parseC14nStatements(c14nStatements: string): string[] {
-    const rdfStatements = NQuads.parse(c14nStatements);
-
-    // TODO: save object's datatype if any
-    return rdfStatements.flatMap((s: any) => [
-      s.subject.value,
-      s.predicate.value,
-      s.object.value,
-      s.graph.value
-    ]);
+  private parseC14nStatements(c14nStatements: string): Statement[] {
+    return c14nStatements
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map((s: string) => new TermwiseStatement(s));
   }
 
   /**
    * @param proof to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyProofData(
     proof: any,
     { documentLoader, expansionMap }: any
-  ): Promise<string[]> {
+  ): Promise<Statement[]> {
     const c14nProofOptions = await this.canonizeProof(proof, {
       documentLoader,
       expansionMap
@@ -47,12 +42,12 @@ export class BbsBlsSignatureTermwise2020 extends BbsBlsSignature2020 {
    * @param document to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyDocumentData(
     document: any,
     { documentLoader, expansionMap }: any
-  ): Promise<string[]> {
+  ): Promise<Statement[]> {
     const c14nDocument = await this.canonize(document, {
       documentLoader,
       expansionMap
