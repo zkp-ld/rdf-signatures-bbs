@@ -3,6 +3,7 @@ import { BbsBlsSignature2020 } from "./BbsBlsSignature2020";
 import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
 import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
 import { Statement } from "./types";
+import { TermwiseStatement } from "./TermwiseStatement";
 
 export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   constructor(options: any) {
@@ -11,6 +12,18 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
   initializeSuite(): BbsBlsSignature2020 {
     return new BbsBlsSignatureTermwise2020();
+  }
+
+  /**
+   * @param nQuads {string} canonized RDF N-Quads as a string
+   *
+   * @returns {Statement[]} an array of statements
+   */
+  getStatements(nQuads: string): Statement[] {
+    return nQuads
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map((s: string) => new TermwiseStatement(s));
   }
 
   /**

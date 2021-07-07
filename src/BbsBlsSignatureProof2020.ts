@@ -327,6 +327,18 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
   }
 
   /**
+   * @param nQuads {string} canonized RDF N-Quads as a string
+   *
+   * @returns {Statement[]} an array of statements
+   */
+  getStatements(nQuads: string): Statement[] {
+    return nQuads
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map((s: string) => new StringStatement(s));
+  }
+
+  /**
    * @param proof to canonicalize
    * @param options to create verify data
    *
@@ -341,10 +353,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
       expansionMap
     });
 
-    return c14nProofOptions
-      .split("\n")
-      .filter(_ => _.length > 0)
-      .map(s => new StringStatement(s));
+    return this.getStatements(c14nProofOptions);
   }
 
   /**
@@ -362,10 +371,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
       expansionMap
     });
 
-    return c14nDocument
-      .split("\n")
-      .filter(_ => _.length > 0)
-      .map(s => new StringStatement(s));
+    return this.getStatements(c14nDocument);
   }
 
   /**
