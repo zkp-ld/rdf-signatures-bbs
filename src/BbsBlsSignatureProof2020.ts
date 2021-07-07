@@ -32,6 +32,7 @@ import { BbsBlsSignature2020 } from "./BbsBlsSignature2020";
 import { randomBytes } from "@stablelib/random";
 import { VerifyProofResult } from "./types/VerifyProofResult";
 import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
+import { StringStatement } from "./StringStatement";
 
 export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
   constructor({ useNativeCanonize, key, LDKeyClass }: any = {}) {
@@ -216,35 +217,32 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     try {
       proof.type = this.mappedDerivedProofType;
 
-      // Get the proof statements
-      const proofStatements = await this.createVerifyProofData(proof, {
+      // canonicalize: get N-Quads from JSON-LD
+      const {
+        documentStatements: skolemizedDocumentStatements,
+        proofStatements
+      } = await this.canonicalize(document, proof, {
+        suite: this,
         documentLoader,
         expansionMap
       });
 
-      // Get the document statements
-      const documentStatements = await this.createVerifyProofData(document, {
-        documentLoader,
-        expansionMap
-      });
-
-      // Transform the blank node identifier placeholders for the document statements
-      // back into actual blank node identifiers
-      const transformedDocumentStatements = documentStatements.map(element =>
-        element.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1")
+      // deskolemize: unname all the blank nodes
+      const documentStatements = await this.deskolemize(
+        skolemizedDocumentStatements
       );
 
       // FOR DEBUG: output console.log
       this.logVerifiedStatements(
         proof.proofValue,
-        transformedDocumentStatements,
+        documentStatements,
         proofStatements
       );
 
       // Combine all the statements to be verified
       const statementsToVerify: Uint8Array[] = proofStatements
-        .concat(transformedDocumentStatements)
-        .map(item => new Uint8Array(Buffer.from(item)));
+        .concat(documentStatements)
+        .flatMap((item: Statement) => item.serialize());
 
       // Fetch the verification method
       const verificationMethod = await this.getVerificationMethod({
@@ -314,9 +312,11 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
   /**
    * @param document {CreateVerifyDataOptions} options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
-  async createVerifyData(options: CreateVerifyDataOptions): Promise<string[]> {
+  async createVerifyData(
+    options: CreateVerifyDataOptions
+  ): Promise<Statement[]> {
     const { proof, document, documentLoader, expansionMap } = options;
 
     const proofStatements = await this.createVerifyProofData(proof, {
@@ -336,36 +336,42 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
    * @param proof to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyProofData(
     proof: any,
     { documentLoader, expansionMap }: any
-  ): Promise<string[]> {
+  ): Promise<Statement[]> {
     const c14nProofOptions = await this.canonizeProof(proof, {
       documentLoader,
       expansionMap
     });
 
-    return c14nProofOptions.split("\n").filter(_ => _.length > 0);
+    return c14nProofOptions
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map(s => new StringStatement(s));
   }
 
   /**
    * @param document to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<{string[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyDocumentData(
     document: any,
     { documentLoader, expansionMap }: any
-  ): Promise<string[]> {
+  ): Promise<Statement[]> {
     const c14nDocument = await this.canonize(document, {
       documentLoader,
       expansionMap
     });
 
-    return c14nDocument.split("\n").filter(_ => _.length > 0);
+    return c14nDocument
+      .split("\n")
+      .filter(_ => _.length > 0)
+      .map(s => new StringStatement(s));
   }
 
   /**
@@ -438,25 +444,24 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
    * @returns {void} output revealed statements to console log
    */
   logRevealedStatements(
-    documentStatements: Statement[],
+    skolemizedDocumentStatements: Statement[],
     proofStatements: Statement[],
     revealedDocumentStatements: Statement[]
   ): void {
     const numberOfProofStatements = proofStatements.length;
-    const skolemizedRevealedDocumentStatements = revealedDocumentStatements
-      .map(
-        statement =>
-          `${statement} # ${documentStatements.indexOf(statement) +
-            numberOfProofStatements}`
-      )
-      .map(statement => statement.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1"));
+    const numberedRevealedDocumentStatements = revealedDocumentStatements.map(
+      statement =>
+        `# ${skolemizedDocumentStatements.findIndex(
+          e => e.toString() === statement.toString()
+        ) + numberOfProofStatements}\n${statement}`
+    );
 
     const numberedProofStatements = proofStatements.map(
-      (statement, i) => `${statement} # ${i}`
+      (statement, i) => `# ${i}\n${statement}`
     );
 
     const allStatements: string[] = numberedProofStatements.concat(
-      skolemizedRevealedDocumentStatements
+      numberedRevealedDocumentStatements
     );
 
     console.log(`
@@ -472,8 +477,8 @@ ${allStatements.join("\n")}`);
    */
   logVerifiedStatements(
     proofValue: string,
-    documentStatements: string[],
-    proofStatements: string[]
+    documentStatements: Statement[],
+    proofStatements: Statement[]
   ): void {
     const verifiedStatements = proofStatements.concat(documentStatements);
 
@@ -548,7 +553,7 @@ ${verifiedStatements.join("\n")}`);
   async skolemize(documentStatements: Statement[]): Promise<SkolemizeResult> {
     // Transform any blank node identifiers for the input
     // document statements into actual node identifiers
-    // e.g _:c14n0 => urn:bnid:_:c14n0
+    // e.g., _:c14n0 => <urn:bnid:_:c14n0>
     const skolemizedDocumentStatements = documentStatements.map(element =>
       element.skolemize()
     );
@@ -559,6 +564,25 @@ ${verifiedStatements.join("\n")}`);
     );
 
     return { skolemizedDocument, skolemizedDocumentStatements };
+  }
+
+  /**
+   * Unname all the blank nodes
+   *
+   * @param documentStatements to deskolemize
+   *
+   * @returns {Promise<DeskolemizeResult>} deskolemized JSON-LD document and statements
+   */
+  async deskolemize(
+    skolemizedDocumentStatements: Statement[]
+  ): Promise<Statement[]> {
+    // Transform the blank node identifier placeholders for the document statements
+    // back into actual blank node identifiers
+    // e.g., <urn:bnid:_:c14n0> => _:c14n0
+    const documentStatements = skolemizedDocumentStatements.map(element =>
+      element.deskolemize()
+    );
+    return documentStatements;
   }
 
   /**
