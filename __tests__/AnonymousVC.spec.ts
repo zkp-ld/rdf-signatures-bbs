@@ -74,46 +74,37 @@ const signDeriveVerify = async (vc: any, reveal: any, subject: any) => {
 
 describe("anonymous verifiable credentials with blank node identifiers", () => {
   it("should sign, derive proof, and verify proof on anonymous verifiable credential", async () => {
-    await signDeriveVerify(
-      testAnonymousVcDocument,
-      testRevealAnonymousVcDocument,
-      {
-        id: "urn:bnid:_:c14n1",
-        type: ["Person", "PermanentResident"],
-        commuterClassification: "C1"
-      }
-    );
+    const vc = { ...testAnonymousVcDocument };
+    await signDeriveVerify(vc, testRevealAnonymousVcDocument, {
+      id: "urn:bnid:_:c14n1",
+      type: ["Person", "PermanentResident"],
+      commuterClassification: "C1"
+    });
   });
 
   it("should sign, derive proof, and verify proof on anonymous nested and partially revealed verifiable credential", async () => {
-    await signDeriveVerify(
-      testNestedAnonymousVcDocument,
-      testNestedRevealDocument,
-      {
-        id: "urn:bnid:_:c14n2",
-        degree: {
-          id: "urn:bnid:_:c14n1",
-          type: "BachelorDegree",
-          name: "Bachelor of Science and Arts"
-        }
+    const vc = { ...testNestedAnonymousVcDocument };
+    await signDeriveVerify(vc, testNestedRevealDocument, {
+      id: "urn:bnid:_:c14n2",
+      degree: {
+        id: "urn:bnid:_:c14n1",
+        type: "BachelorDegree",
+        name: "Bachelor of Science and Arts"
       }
-    );
+    });
   });
 
   it("should sign, derive proof, and verify proof on anonymous nested and fully revealed verifiable credential", async () => {
-    await signDeriveVerify(
-      testNestedAnonymousVcDocument,
-      testNestedRevealFullDocument,
-      {
-        id: "urn:bnid:_:c14n2",
-        degree: {
-          id: "urn:bnid:_:c14n1",
-          type: "BachelorDegree",
-          name: "Bachelor of Science and Arts",
-          degreeType: "Underwater Basket Weaving"
-        },
-        college: "Contoso University"
-      }
-    );
+    const vc = { ...testNestedAnonymousVcDocument };
+    await signDeriveVerify(vc, testNestedRevealFullDocument, {
+      id: "urn:bnid:_:c14n2",
+      degree: {
+        id: "urn:bnid:_:c14n1",
+        type: "BachelorDegree",
+        name: "Bachelor of Science and Arts",
+        degreeType: "Underwater Basket Weaving"
+      },
+      college: "Contoso University"
+    });
   });
 });
