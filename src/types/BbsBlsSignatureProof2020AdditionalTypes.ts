@@ -11,7 +11,6 @@
  * limitations under the License.
  */
 
-import { BbsBlsSignature2020 } from "src/BbsBlsSignature2020";
 import { Statement } from "./Statement";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -19,7 +18,7 @@ export interface CanonicalizeOptions {
   /**
    * The signature suite
    */
-  readonly suite: BbsBlsSignature2020;
+  readonly suite: any;
   /**
    * Optional custom document loader
    */
@@ -60,7 +59,7 @@ export interface RevealOptions {
   /**
    * The signature suite
    */
-  readonly suite: BbsBlsSignature2020;
+  readonly suite: any;
   /**
    * Optional custom document loader
    */

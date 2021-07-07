@@ -32,4 +32,4 @@ export {
   RevealOptions,
   RevealResult
 } from "./BbsBlsSignatureProof2020AdditionalTypes";
-export { Statement, StringStatement, TermwiseStatement } from "./Statement";
+export { Statement } from "./Statement";

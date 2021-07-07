@@ -22,11 +22,11 @@ import {
   VerifyProofOptions,
   VerifySignatureOptions,
   SuiteSignOptions,
-  Statement,
-  StringStatement
+  Statement
 } from "./types";
 import { w3cDate } from "./utilities";
 import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
+import { StringStatement } from "./StringStatement";
 
 /**
  * A BBS+ signature suite for use with BLS12-381 key pairs
@@ -199,7 +199,7 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
     const signedStatements: Statement[] = await this.createVerifyData(options);
 
     const numberedSignedStatements: string[] = signedStatements.map(
-      (statements, i) => `${statements} # ${i}`
+      (statements, i) => `# ${i}\n${statements}`
     );
 
     console.log(`
