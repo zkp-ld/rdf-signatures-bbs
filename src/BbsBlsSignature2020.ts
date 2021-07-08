@@ -94,6 +94,7 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
       }
     }
     this.useNativeCanonize = useNativeCanonize;
+    this.Statement = StringStatement;
   }
 
   /**
@@ -330,7 +331,7 @@ ${numberedSignedStatements.join("\n")}`);
     return nQuads
       .split("\n")
       .filter(_ => _.length > 0)
-      .map((s: string) => new StringStatement(s));
+      .map((s: string) => new this.Statement(s));
   }
 
   /**
