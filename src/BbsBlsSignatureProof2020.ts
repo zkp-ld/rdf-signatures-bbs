@@ -62,6 +62,8 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     this.proofSignatureKey = "proofValue";
     this.key = key;
     this.useNativeCanonize = useNativeCanonize;
+    this.Suite = BbsBlsSignature2020;
+    this.Statement = StringStatement;
   }
 
   /**
@@ -97,7 +99,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     const signature = Buffer.from(proof[this.proofSignatureKey], "base64");
 
     // Initialize the signature suite
-    const suite = this.initializeSuite();
+    const suite = new this.Suite();
 
     // Initialize the derived proof
     let derivedProof;
@@ -335,7 +337,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     return nQuads
       .split("\n")
       .filter(_ => _.length > 0)
-      .map((s: string) => new StringStatement(s));
+      .map((s: string) => new this.Statement(s));
   }
 
   /**
@@ -481,15 +483,6 @@ ${Buffer.from(proofValue, "base64").toString("hex")}
 
 # statements to be verified
 ${verifiedStatements.join("\n")}`);
-  }
-
-  /**
-   * Initialize signature suite
-   *
-   * @returns signature suite
-   */
-  initializeSuite(): BbsBlsSignature2020 {
-    return new BbsBlsSignature2020();
   }
 
   /**
