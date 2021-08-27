@@ -179,13 +179,9 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     });
 
     // Construct a key pair class from the returned verification method
-<<<<<<< HEAD
     const key = verificationMethod.publicKeyJwk
       ? await this.LDKeyClass.fromJwk(verificationMethod)
       : await this.LDKeyClass.from(verificationMethod);
-=======
-    const key = await this.LDKeyClass.from(verificationMethod);
->>>>>>> 753dbf962db5047972f0a7c8e7a790a5c5c32eea
 
     // createProof: create BBS+ proof
     const outputProof = await this.createProof(
