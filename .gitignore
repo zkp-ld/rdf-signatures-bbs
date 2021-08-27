@@ -21,6 +21,7 @@ build/
 # Visual Studio Code
 ######################
 .vscode/
+.devcontainer/
 
 ######################
 # Windows
