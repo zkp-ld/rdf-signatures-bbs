@@ -12,7 +12,6 @@
  */
 
 import { customLoader } from "./customDocumentLoader";
-import { expCustomLoader } from "./expCustomDocumentLoader";
 
 import exampleBls12381KeyPair from "./data/exampleBls12381KeyPair.json";
 import exampleEd25519KeyPair from "./data/did_example_b34ca6cd37bbf23_test.json";
@@ -78,6 +77,5 @@ export {
   testNestedAnonymousVcDocument,
   expExampleBls12381KeyPair,
   expVCDocument,
-  expRevealDocument,
-  expCustomLoader
+  expRevealDocument
 };

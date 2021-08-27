@@ -27,6 +27,8 @@ import exampleDidb34Key from "./data/did_example_b34ca6cd37bbf23_test.json";
 import exampleDidb34Doc from "./data/did_example_b34ca6cd37bbf23.json";
 import exampleDid826Key from "./data/did_example_82612387612873_test.json";
 import exampleDid826Doc from "./data/did_example_82612387612873.json";
+import expExampleDidKey from "./data/exp_didkey_issuer1.json";
+import expExampleDidDoc from "./data/exp_diddoc_issuer1.json";
 
 export const documents: any = {
   "https://w3id.org/security/v3-unstable": securityV3,
@@ -45,7 +47,9 @@ export const documents: any = {
   "https://w3id.org/security/bbs/v1": bbsContext,
   "https://schema.org": schemaOrg,
   "https://schema.org/": schemaOrg,
-  "http://schema.org/": schemaOrg
+  "http://schema.org/": schemaOrg,
+  "did:example:issuer1": expExampleDidDoc,
+  "did:example:issuer1#bbs-bls-key1": expExampleDidKey
 };
 
 const customDocLoader = (url: string): any => {

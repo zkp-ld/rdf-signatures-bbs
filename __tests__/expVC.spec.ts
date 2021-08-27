@@ -2,7 +2,7 @@ import {
   expExampleBls12381KeyPair,
   expVCDocument,
   expRevealDocument,
-  expCustomLoader
+  customLoader
 } from "./__fixtures__";
 
 import {
@@ -24,7 +24,7 @@ describe("experimental verifiable credentials", () => {
       expRevealDocument,
       {},
       expKey,
-      expCustomLoader,
+      customLoader,
       BbsBlsSignature2020,
       BbsBlsSignatureProof2020
     );
@@ -37,7 +37,7 @@ describe("experimental verifiable credentials", () => {
       expRevealDocument,
       {},
       expKey,
-      expCustomLoader,
+      customLoader,
       BbsBlsSignatureTermwise2020,
       BbsBlsSignatureProofTermwise2020
     );
