@@ -5,7 +5,7 @@ import { Statement } from "./types";
 import { TermwiseStatement } from "./TermwiseStatement";
 
 export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
-  constructor(options: any) {
+  constructor(options: any = {}) {
     super(options);
     this.Suite = BbsBlsSignatureTermwise2020;
     this.Statement = TermwiseStatement;
