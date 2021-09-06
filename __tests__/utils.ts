@@ -81,16 +81,17 @@ ${JSON.stringify(result, null, 2)}`);
 
 export const signDeriveVerifyMulti = async (
   vcRevealKeys: any[],
+  hiddenUris: string[],
   customLoader: any,
   signSuite: any,
   proofSuite: any
 ) => {
   for (const vcRevealKey of vcRevealKeys) {
-    const [vc, reveal, key] = vcRevealKey;
+    const { vc, key } = vcRevealKey;
 
     console.log(`
-    # Issuer: prepare Credential to be signed:
-    ${JSON.stringify(vc, null, 2)}`);
+# Issuer: prepare Credential to be signed:
+${JSON.stringify(vc, null, 2)}`);
 
     // Issuer issues VC
     const signedVc = await jsigs.sign(vc, {
@@ -102,9 +103,16 @@ export const signDeriveVerifyMulti = async (
     });
     expect(signedVc).toBeDefined();
 
+    vcRevealKey["signedVc"] = signedVc;
+
     console.log(`
-    # Issuer: issue VC:
-    ${JSON.stringify(signedVc, null, 2)}`);
+# Issuer: issue VC:
+${JSON.stringify(signedVc, null, 2)}`);
+  }
+
+  const suite = new proofSuite();
+  for (const vcRevealKey of vcRevealKeys) {
+    const { revealDocument, signedVc } = vcRevealKey;
 
     // Holder verifies VC
     const verifiedVc = await jsigs.verify(signedVc, {
@@ -117,11 +125,33 @@ export const signDeriveVerifyMulti = async (
     expect(verifiedVc.verified).toBeTruthy();
 
     console.log(`
-    # Holder: verify VC:
-    ${JSON.stringify(verifiedVc, null, 2)}`);
+# Holder: verify VC:
+${JSON.stringify(verifiedVc, null, 2)}`);
 
     console.log(`
-    # Holder: prepare Reveal Document as JSON-LD Frame:
-    ${JSON.stringify(reveal, null, 2)}`);
+# Holder: prepare Reveal Document as JSON-LD Frame:
+${JSON.stringify(revealDocument, null, 2)}`);
+
+    // Holder gets proofs
+    const { proofs, document } = await getProofs({
+      document: signedVc,
+      proofType: suite.supportedDeriveProofType,
+      documentLoader: customLoader
+    });
+
+    if (proofs.length === 0) {
+      throw new Error(
+        `There were not any proofs provided that can be used to derive a proof with this suite.`
+      );
+    }
+
+    vcRevealKey["proof"] = proofs[0];
+    vcRevealKey["document"] = document;
   }
+
+  suite.deriveProofMulti({
+    inputDocuments: vcRevealKeys,
+    documentLoader: customLoader,
+    hiddenUris
+  });
 };

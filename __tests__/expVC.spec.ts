@@ -50,11 +50,14 @@ describe("experimental verifiable credentials", () => {
   it("[TermwiseStatement] should sign multiple VCs, derive a proof from them, and verify the proof", async () => {
     const vc = { ...expVCDocument };
     const vc2 = { ...expVCDocument2 };
+    const hiddenUris = ["<did:example:cityA>"];
+
     await signDeriveVerifyMulti(
       [
-        [vc, expRevealDocument, expKey1],
-        [vc2, expRevealDocument2, expKey2]
+        { vc, revealDocument: expRevealDocument, key: expKey1 },
+        { vc: vc2, revealDocument: expRevealDocument2, key: expKey2 }
       ],
+      hiddenUris,
       customLoader,
       BbsBlsSignatureTermwise2020,
       BbsBlsSignatureProofTermwise2020

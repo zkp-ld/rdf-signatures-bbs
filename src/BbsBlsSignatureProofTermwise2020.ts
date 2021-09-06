@@ -228,7 +228,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       // calculate index of hidden URIs
       terms.forEach((term, termIndex) => {
         if (term in E) {
-          if (termIndex in revealIndicies) {
+          if (revealIndicies.includes(termIndex)) {
             // remove hidden URI from revealIndicies
             revealIndicies = revealIndicies.filter(i => i != termIndex);
             // add (credIndex, termIndex) to E
@@ -236,13 +236,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           }
         }
       });
-
-      // // FOR DEBUG: output console.log
-      // this.logRevealedStatements(
-      //   skolemizedDocumentStatements,
-      //   proofStatements,
-      //   revealedDocumentStatements
-      // );
 
       // Fetch the verification method
       const verificationMethod = await this.getVerificationMethod({
@@ -278,8 +271,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     }
 
     return {};
-
-    // TBD: inputStatements -> msgVkSigs への変換 (各 term へのラベル付けと同値関係 E の計算)
 
     // // Compute the proof
     // const outputProof = await blsCreateProofMulti({
