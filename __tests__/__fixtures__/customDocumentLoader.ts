@@ -29,6 +29,8 @@ import exampleDid826Key from "./data/did_example_82612387612873_test.json";
 import exampleDid826Doc from "./data/did_example_82612387612873.json";
 import expExampleDidKey from "./data/exp_didkey_issuer1.json";
 import expExampleDidDoc from "./data/exp_diddoc_issuer1.json";
+import expExampleDidKey2 from "./data/exp_didkey_issuer2.json";
+import expExampleDidDoc2 from "./data/exp_diddoc_issuer2.json";
 
 export const documents: any = {
   "https://w3id.org/security/v3-unstable": securityV3,
@@ -49,7 +51,9 @@ export const documents: any = {
   "https://schema.org/": schemaOrg,
   "http://schema.org/": schemaOrg,
   "did:example:issuer1": expExampleDidDoc,
-  "did:example:issuer1#bbs-bls-key1": expExampleDidKey
+  "did:example:issuer1#bbs-bls-key1": expExampleDidKey,
+  "did:example:issuer2": expExampleDidDoc2,
+  "did:example:issuer2#bbs-bls-key1": expExampleDidKey2
 };
 
 const customDocLoader = (url: string): any => {

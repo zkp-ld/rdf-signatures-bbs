@@ -42,8 +42,12 @@ import testAnonymousVcDocument from "./data/test_anonymous_vc.json";
 import testRevealAnonymousVcDocument from "./data/test_anonymous_vc_reveal_document.json";
 import testNestedAnonymousVcDocument from "./data/test_nested_anonymous_vc_document.json";
 import expExampleBls12381KeyPair from "./data/exp_exampleBls12381KeyPair.json";
+import expExampleBls12381KeyPair2 from "./data/exp_exampleBls12381KeyPair2.json";
 import expVCDocument from "./data/exp_vc.json";
+import expVCDocument2 from "./data/exp_vc2.json";
 import expRevealDocument from "./data/exp_reveal_document.json";
+import expRevealDocument2 from "./data/exp_reveal_document2.json";
+import testSignedDocumentTermwise from "./data/test_signed_document_termwise.json";
 
 export {
   exampleBls12381KeyPair,
@@ -76,6 +80,10 @@ export {
   testRevealAnonymousVcDocument,
   testNestedAnonymousVcDocument,
   expExampleBls12381KeyPair,
+  expExampleBls12381KeyPair2,
   expVCDocument,
-  expRevealDocument
+  expVCDocument2,
+  expRevealDocument,
+  expRevealDocument2,
+  testSignedDocumentTermwise
 };
