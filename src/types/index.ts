@@ -29,8 +29,10 @@ export { GetTypeOptions } from "./GetTypeOptions";
 export {
   CanonicalizeOptions,
   CanonicalizeResult,
+  TermwiseCanonicalizeResult,
   SkolemizeResult,
   RevealOptions,
   RevealResult
 } from "./BbsBlsSignatureProof2020AdditionalTypes";
 export { Statement } from "./Statement";
+export { DeriveProofMultiOptions } from "./DeriveProofMultiOptions";

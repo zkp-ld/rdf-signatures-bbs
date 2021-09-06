@@ -12,6 +12,7 @@
  */
 
 import { Statement } from "./Statement";
+import { TermwiseStatement } from "src/TermwiseStatement";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CanonicalizeOptions {
@@ -42,6 +43,17 @@ export interface CanonicalizeResult {
    * proof statements (array of quads)
    */
   proofStatements: Statement[];
+}
+
+export interface TermwiseCanonicalizeResult {
+  /**
+   * document statements (array of quads)
+   */
+  documentStatements: TermwiseStatement[];
+  /**
+   * proof statements (array of quads)
+   */
+  proofStatements: TermwiseStatement[];
 }
 
 export interface SkolemizeResult {

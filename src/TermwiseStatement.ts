@@ -83,7 +83,7 @@ export class TermwiseStatement implements Statement {
     return NQuads.serializeQuad(this.buffer);
   }
 
-  serialize(): Uint8Array[] {
+  toTerms(): [string, string, string, string] {
     const s = this.buffer.subject;
     const p = this.buffer.predicate;
     const o = this.buffer.object;
@@ -121,9 +121,11 @@ export class TermwiseStatement implements Statement {
       gOut = `${g.value}`;
     }
 
-    return [sOut, pOut, oOut, gOut].map(
-      term => new Uint8Array(Buffer.from(term))
-    );
+    return [sOut, pOut, oOut, gOut];
+  }
+
+  serialize(): Uint8Array[] {
+    return this.toTerms().map(term => new Uint8Array(Buffer.from(term)));
   }
 
   skolemize(): Statement {
