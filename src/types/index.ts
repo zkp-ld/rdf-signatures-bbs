@@ -32,7 +32,8 @@ export {
   TermwiseCanonicalizeResult,
   SkolemizeResult,
   RevealOptions,
-  RevealResult
+  RevealResult,
+  BBSInput
 } from "./BbsBlsSignatureProof2020AdditionalTypes";
 export { Statement } from "./Statement";
 export { DeriveProofMultiOptions } from "./DeriveProofMultiOptions";

@@ -7,17 +7,11 @@ import {
   Statement,
   CanonicalizeOptions,
   TermwiseCanonicalizeResult,
-  DeriveProofMultiOptions
+  DeriveProofMultiOptions,
+  BBSInput
 } from "./types";
 import { TermwiseStatement } from "./TermwiseStatement";
 import { randomBytes } from "@stablelib/random";
-
-export interface BBSInput {
-  readonly terms: string[];
-  readonly revealIndicies: number[];
-  readonly issuerPublicKey: any;
-  readonly signature: Buffer;
-}
 
 export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   constructor(options: any = {}) {
