@@ -14,7 +14,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
 import { suites, SECURITY_CONTEXT_URL } from "jsonld-signatures";
-import { blsCreateProof, blsVerifyProof } from "@mattrglobal/bbs-signatures";
+import { blsCreateProof, blsVerifyProof } from "@yamdan/bbs-signatures";
 import {
   DeriveProofOptions,
   DidDocumentPublicKey,
@@ -31,7 +31,7 @@ import {
 import { BbsBlsSignature2020 } from "./BbsBlsSignature2020";
 import { randomBytes } from "@stablelib/random";
 import { VerifyProofResult } from "./types/VerifyProofResult";
-import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
+import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
 import { StringStatement } from "./StringStatement";
 
 export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {

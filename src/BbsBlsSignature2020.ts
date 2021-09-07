@@ -25,7 +25,7 @@ import {
   Statement
 } from "./types";
 import { w3cDate } from "./utilities";
-import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
+import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
 import { StringStatement } from "./StringStatement";
 
 /**
