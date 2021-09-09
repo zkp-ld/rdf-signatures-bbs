@@ -3,6 +3,7 @@ import jsonld from "jsonld";
 import { SECURITY_CONTEXT_URL } from "jsonld-signatures";
 import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
 import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
+import { blsCreateProofMulti } from "@yamdan/bbs-signatures";
 import {
   Statement,
   CanonicalizeOptions,
@@ -142,10 +143,15 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       nonce = await randomBytes(50);
     }
 
-    const bbsInputs: BBSInput[] = [];
+    const termsArray: Uint8Array[][] = [];
+    const revealIndiciesArray: number[][] = [];
+    const issuerPublicKeyArray: Buffer[] = [];
+    const signatureArray: Buffer[] = [];
     const revealedDocuments: any = [];
     const derivedProofs: any = [];
-    const E = Object.fromEntries(hiddenUris.map(uri => [uri, []]));
+    const equivs: { [uri: string]: [number, number][] } = Object.fromEntries(
+      hiddenUris.map(uri => [uri, []])
+    );
 
     let index = 0;
     for (const { document, proof, revealDocument } of inputDocuments) {
@@ -162,6 +168,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // Extract the BBS signature from the input proof
       const signature = Buffer.from(proof[this.proofSignatureKey], "base64");
+      signatureArray.push(signature);
 
       // Initialize the signature suite
       const suite = new this.Suite();
@@ -200,6 +207,10 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         .concat(documentStatements)
         .flatMap((item: TermwiseStatement) => item.toTerms());
 
+      termsArray.push(
+        terms.map((term: string) => new Uint8Array(Buffer.from(term)))
+      );
+
       // skolemize: name all the blank nodes
       const {
         skolemizedDocument,
@@ -227,15 +238,14 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // calculate index of hidden URIs
       terms.forEach((term, termIndex) => {
-        if (term in E) {
+        if (term in equivs) {
           if (revealIndicies.includes(termIndex)) {
-            // remove hidden URI from revealIndicies
-            revealIndicies = revealIndicies.filter(i => i != termIndex);
-            // add (credIndex, termIndex) to E
-            E[term].push([index, termIndex]);
+            equivs[term].push([index, termIndex]);
           }
         }
       });
+
+      revealIndiciesArray.push(revealIndicies);
 
       // Fetch the verification method
       const verificationMethod = await this.getVerificationMethod({
@@ -250,6 +260,8 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         ? await this.LDKeyClass.fromJwk(verificationMethod)
         : await this.LDKeyClass.from(verificationMethod);
 
+      issuerPublicKeyArray.push(issuerPublicKey.publicKeyBuffer);
+
       // Set the relevant proof elements on the derived proof from the input proof
       derivedProof.verificationMethod = proof.verificationMethod;
       derivedProof.proofPurpose = proof.proofPurpose;
@@ -257,26 +269,29 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // Set the nonce on the derived proof
       derivedProof.nonce = Buffer.from(nonce).toString("base64");
-
-      bbsInputs.push({
-        terms,
-        revealIndicies,
-        issuerPublicKey,
-        signature
-      });
-
       derivedProofs.push(derivedProof);
 
       index++;
     }
 
+    const equivsArray: [number, number][][] = Object.values(equivs);
+
+    // Compute the proof
+    const outputProof = await blsCreateProofMulti({
+      signature: signatureArray.map(signature => new Uint8Array(signature)),
+      publicKey: issuerPublicKeyArray.map(
+        (issuerPublicKey: Buffer) => new Uint8Array(issuerPublicKey)
+      ),
+      messages: termsArray,
+      nonce: nonce,
+      revealed: revealIndiciesArray,
+      equivs: equivsArray
+    });
+
     return {};
 
-    // // Compute the proof
-    // const outputProof = await blsCreateProofMulti({
-    //   msgVkSigs,
-    //   nonce: nonce,
-    // });
+    // TODO: set dummy id to hiddenURIs
+    // TODO: Set the proof value on the derived proof
 
     // // Set the proof value on the derived proof
     // const presentationProof = {

@@ -149,6 +149,7 @@ ${JSON.stringify(revealDocument, null, 2)}`);
     vcRevealKey["document"] = document;
   }
 
+  // Holder derives proof
   suite.deriveProofMulti({
     inputDocuments: vcRevealKeys,
     documentLoader: customLoader,
