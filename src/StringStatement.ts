@@ -26,4 +26,8 @@ export class StringStatement implements Statement {
       this.buffer.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1")
     );
   }
+
+  replace(from: string, to: string): Statement {
+    return new StringStatement(this.buffer.replace(from, to));
+  }
 }

@@ -114,8 +114,8 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     // Expand indicies to fit termwise encoding
     // e.g., [0, 2, 5] -> [0,1,2,3, 8,9,10,11, 20,21,22,23]
     const revealIndicies = BaseRevealIndicies.flatMap(index =>
-      [...Array(NUM_OF_TERMS_IN_STATEMENT)].map(
-        (_, i) => index * NUM_OF_TERMS_IN_STATEMENT + i
+      [...Array(NUM_OF_TERMS_IN_STATEMENT).keys()].map(
+        i => index * NUM_OF_TERMS_IN_STATEMENT + i
       )
     );
     return revealIndicies;
@@ -150,7 +150,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const revealedDocuments: any = [];
     const derivedProofs: any = [];
     const equivs: { [uri: string]: [number, number][] } = Object.fromEntries(
-      hiddenUris.map(uri => [uri, []])
+      hiddenUris.map(uri => [`<${uri}>`, []])
     );
 
     let index = 0;
@@ -227,15 +227,57 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         expansionMap
       });
 
-      // TODO: replace hiddenURIs by dummy ids
-      revealedDocuments.push(revealedDocument);
+      // prepare anonymized JSON-LD document to be verified
+      // by replacing hiddenURIs by anonymized IDs
+      // (e.g., "did:anon:0", tentatively...)
+      const anonymizeDocument = (doc: any) => {
+        for (const [k, v] of Object.entries(doc)) {
+          if (typeof v === "object") {
+            anonymizeDocument(v);
+          } else if (typeof v === "string") {
+            const iid = hiddenUris.indexOf(v);
+            if (iid != -1) {
+              doc[k] = `did:anon:${iid}`;
+            }
+          }
+        }
+      };
+
+      const anonymizedDocumentStatements = documentStatements.map(
+        (s: TermwiseStatement) => {
+          hiddenUris.forEach((uri, i) => {
+            s = s.replace(uri, `did:anon:${i}`);
+          });
+          return s;
+        }
+      );
+
+      let anonymizedRevealedDocument = { ...revealedDocument };
+      anonymizeDocument(anonymizedRevealedDocument);
+      revealedDocuments.push(anonymizedRevealedDocument);
+
+      const anonymizedRevealedDocumentStatements = await this.createVerifyDocumentData(
+        anonymizedRevealedDocument,
+        {
+          suite,
+          documentLoader,
+          expansionMap,
+          skipProofCompaction
+        }
+      );
 
       // getIndicies: calculate reveal indicies
+      // let revealIndicies = this.getIndicies(
+      //   skolemizedDocumentStatements,
+      //   revealedDocumentStatements,
+      //   proofStatements
+      // );
       let revealIndicies = this.getIndicies(
-        skolemizedDocumentStatements,
-        revealedDocumentStatements,
+        anonymizedDocumentStatements,
+        anonymizedRevealedDocumentStatements,
         proofStatements
       );
+      revealIndiciesArray.push(revealIndicies);
 
       // calculate index of hidden URIs
       terms.forEach((term, termIndex) => {
@@ -245,8 +287,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           }
         }
       });
-
-      revealIndiciesArray.push(revealIndicies);
 
       // Fetch the verification method
       const verificationMethod = await this.getVerificationMethod({
@@ -267,9 +307,9 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       derivedProof.verificationMethod = proof.verificationMethod;
       derivedProof.proofPurpose = proof.proofPurpose;
       derivedProof.created = proof.created;
-
       // Set the nonce on the derived proof
       derivedProof.nonce = Buffer.from(nonce).toString("base64");
+
       derivedProofs.push(derivedProof);
 
       index++;

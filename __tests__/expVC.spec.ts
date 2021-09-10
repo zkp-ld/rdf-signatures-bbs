@@ -55,7 +55,13 @@ describe("experimental verifiable credentials", () => {
     const vc = { ...expVCDocument };
     const vc2 = { ...expVCDocument2 };
     const vc3 = { ...expVCDocument3 };
-    const hiddenUris = ["<did:example:cityA>", "<did:example:holder1>"];
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "http://example.org/credentials/9876",
+      "http://example.org/credentials/abcd",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
 
     await signDeriveVerifyMulti(
       [

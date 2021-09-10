@@ -172,4 +172,22 @@ export class TermwiseStatement implements Statement {
 
     return new TermwiseStatement(out);
   }
+
+  replace(from: string, to: string): TermwiseStatement {
+    const replaced = { ...this.buffer };
+
+    const s = replaced.subject;
+    const p = replaced.predicate;
+    const o = replaced.object;
+    const g = replaced.graph;
+
+    s.value = s.value.replace(from, to);
+    p.value = p.value.replace(from, to);
+    o.value = o.value.replace(from, to);
+    if (g) {
+      g.value = g.value.replace(from, to);
+    }
+
+    return new TermwiseStatement(replaced);
+  }
 }
