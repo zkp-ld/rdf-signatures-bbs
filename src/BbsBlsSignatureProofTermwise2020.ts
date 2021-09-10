@@ -227,6 +227,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         expansionMap
       });
 
+      // TODO: replace hiddenURIs by dummy ids
       revealedDocuments.push(revealedDocument);
 
       // getIndicies: calculate reveal indicies
@@ -277,7 +278,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const equivsArray: [number, number][][] = Object.values(equivs);
 
     // Compute the proof
-    const outputProof = await blsCreateProofMulti({
+    const outputProofs = await blsCreateProofMulti({
       signature: signatureArray.map(signature => new Uint8Array(signature)),
       publicKey: issuerPublicKeyArray.map(
         (issuerPublicKey: Buffer) => new Uint8Array(issuerPublicKey)
@@ -288,19 +289,18 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       equivs: equivsArray
     });
 
-    return {};
+    // Set the proof value on the derived proof
+    const results = [];
+    for (let i = 0; i < revealedDocuments.length; i++) {
+      derivedProofs[i].proofValue = Buffer.from(outputProofs[i]).toString(
+        "base64"
+      );
+      results.push({
+        document: revealedDocuments[i],
+        proof: derivedProofs[i]
+      });
+    }
 
-    // TODO: set dummy id to hiddenURIs
-    // TODO: Set the proof value on the derived proof
-
-    // // Set the proof value on the derived proof
-    // const presentationProof = {
-    //   proofValue: Buffer.from(outputProof).toString("base64")
-    // };
-
-    // return {
-    //   document: revealedDocuments,
-    //   proof: presentationProof
-    // };
+    return results;
   }
 }
