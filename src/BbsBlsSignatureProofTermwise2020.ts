@@ -379,9 +379,28 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const { inputDocuments, documentLoader, expansionMap, purpose } = options;
 
     let result = true;
-    let results: VerifyProofResult[] = [];
-    for (const { document, proof } of inputDocuments) {
-      try {
+    const results: VerifyProofResult[] = [];
+
+    const messagesArray: Uint8Array[][] = [];
+    const proofArray: Uint8Array[] = [];
+    const issuerPublicKeyArray: Uint8Array[] = [];
+
+    let previous_nonce = "";
+
+    try {
+      for (const { document, proof } of inputDocuments) {
+        // TODO: handle the case of empty nonce
+        if (proof.nonce !== previous_nonce && previous_nonce !== "") {
+          throw new Error(
+            "all the nonces in credentials must have the same values"
+          );
+        }
+        previous_nonce = proof.nonce;
+
+        proofArray.push(
+          new Uint8Array(Buffer.from(proof.proofValue, "base64"))
+        );
+
         proof.type = this.mappedDerivedProofType;
 
         // canonicalize: get N-Quads from JSON-LD
@@ -399,17 +418,12 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           skolemizedDocumentStatements
         );
 
-        // FOR DEBUG: output console.log
-        this.logVerifiedStatements(
-          proof.proofValue,
-          documentStatements,
-          proofStatements
-        );
-
         // Combine all the statements to be verified
         const statementsToVerify: Uint8Array[] = proofStatements
           .concat(documentStatements)
           .flatMap((item: Statement) => item.serialize());
+
+        messagesArray.push(statementsToVerify);
 
         // Fetch the verification method
         const verificationMethod = await this.getVerificationMethod({
@@ -424,32 +438,34 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           ? await this.LDKeyClass.fromJwk(verificationMethod)
           : await this.LDKeyClass.from(verificationMethod);
 
-        // Verify the proof
-        const verified = await blsVerifyProofMulti({
-          proof: new Uint8Array(Buffer.from(proof.proofValue, "base64")),
-          publicKey: new Uint8Array(key.publicKeyBuffer),
-          messages: statementsToVerify,
-          nonce: new Uint8Array(Buffer.from(proof.nonce as string, "base64"))
-        });
-
-        // Ensure proof was performed for a valid purpose
-        const { valid, error } = await purpose.validate(proof, {
-          document,
-          suite: this,
-          verificationMethod,
-          documentLoader,
-          expansionMap
-        });
-        if (!valid) {
-          throw error;
-        }
-
-        results.push(verified);
-        result = result && verified.verified;
-      } catch (error) {
-        results.push({ verified: false, error });
-        result = false;
+        issuerPublicKeyArray.push(new Uint8Array(key.publicKeyBuffer));
       }
+
+      // Verify the proof
+      const verified = await blsVerifyProofMulti({
+        proof: proofArray,
+        publicKey: issuerPublicKeyArray,
+        messages: messagesArray,
+        nonce: new Uint8Array(Buffer.from(previous_nonce as string, "base64"))
+      });
+
+      // TODO: redefine validation process
+      // // Ensure proof was performed for a valid purpose
+      // const { valid, error } = await purpose.validate(proof, {
+      //   document,
+      //   suite: this,
+      //   verificationMethod,
+      //   documentLoader,
+      //   expansionMap
+      // });
+      // if (!valid) {
+      //   throw error;
+      // }
+
+      results.push(verified);
+      result = result && verified.verified;
+    } catch (error) {
+      return { verified: false, error };
     }
 
     if (results.length === 0) {

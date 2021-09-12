@@ -37,4 +37,8 @@ export interface VerifyProofMultiResult {
    * Each result of verifications
    */
   readonly results: VerifyProofResult[];
+  /**
+   * A string representing the error if the verification failed
+   */
+  readonly error?: string;
 }
