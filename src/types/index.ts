@@ -17,6 +17,7 @@ export { KeyPairVerifier } from "./KeyPairVerifier";
 export { SignatureSuiteOptions } from "./SignatureSuiteOptions";
 export { CreateProofOptions } from "./CreateProofOptions";
 export { VerifyProofOptions } from "./VerifyProofOptions";
+export { VerifyProofResult } from "./VerifyProofResult";
 export { CanonizeOptions } from "./CanonizeOptions";
 export { CreateVerifyDataOptions } from "./CreateVerifyDataOptions";
 export { VerifySignatureOptions } from "./VerifySignatureOptions";

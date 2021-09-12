@@ -19,6 +19,7 @@ import {
   DeriveProofOptions,
   DidDocumentPublicKey,
   VerifyProofOptions,
+  VerifyProofResult,
   CreateVerifyDataOptions,
   CanonizeOptions,
   CanonicalizeOptions,
@@ -30,7 +31,6 @@ import {
 } from "./types";
 import { BbsBlsSignature2020 } from "./BbsBlsSignature2020";
 import { randomBytes } from "@stablelib/random";
-import { VerifyProofResult } from "./types/VerifyProofResult";
 import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
 import { StringStatement } from "./StringStatement";
 
