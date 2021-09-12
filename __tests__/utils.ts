@@ -150,9 +150,26 @@ ${JSON.stringify(revealDocument, null, 2)}`);
   }
 
   // Holder derives proof
-  suite.deriveProofMulti({
+  const derivedProofs = await suite.deriveProofMulti({
     inputDocuments: vcRevealKeys,
     documentLoader: customLoader,
     hiddenUris
   });
+  expect(derivedProofs.length).toEqual(vcRevealKeys.length);
+
+  // Verifier verifies proof
+
+  // for (const derivedProof of derivedProofs) {
+  //   const { document, proofs } = await getProofs({
+  //     document: derivedProof,
+  //     proofType: proofSuite.proofType,
+  //     documentLoader: customLoader
+  //   });
+  // }
+  const result = await suite.verifyProofMulti({
+    inputDocuments: derivedProofs,
+    documentLoader: customLoader,
+    purpose: new jsigs.purposes.AssertionProofPurpose()
+  });
+  expect(result.verified).toBeTruthy();
 };

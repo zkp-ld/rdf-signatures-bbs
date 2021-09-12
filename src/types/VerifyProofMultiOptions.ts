@@ -11,30 +11,36 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Result of calling verify proof
+ * Options for verifying a proof
  */
-export interface VerifyProofResult {
+export interface VerifyProofMultiOptions {
   /**
-   * A boolean indicating if the verification was successful
+   * Input documents and proofs to be verified
    */
-  readonly verified: boolean;
+  readonly inputDocuments: VerifyProofMultiInputDocs[];
   /**
-   * A string representing the error if the verification failed
+   * The proof purpose to specify for the generated proof
    */
-  readonly error?: string;
+  readonly purpose: any;
+  /**
+   * Optional custom document loader
+   */
+  documentLoader?: Function;
+  /**
+   * Optional expansion map
+   */
+  expansionMap?: Function;
 }
 
-/**
- * Result of calling multi verify proof
- */
-export interface VerifyProofMultiResult {
+export interface VerifyProofMultiInputDocs {
   /**
-   * A boolean indicating if the verification was successful
+   * The proof
    */
-  readonly verified: boolean;
+  readonly proof: any;
   /**
-   * Each result of verifications
+   * The document
    */
-  readonly results: VerifyProofResult[];
+  readonly document: any;
 }

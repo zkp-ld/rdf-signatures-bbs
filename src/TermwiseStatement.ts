@@ -153,7 +153,7 @@ export class TermwiseStatement implements Statement {
    * back into actual blank node identifiers
    * e.g., <urn:bnid:_:c14n0> => _:c14n0
    */
-  deskolemize(): Statement {
+  deskolemize(): TermwiseStatement {
     // deep copy
     const out: Quad = JSON.parse(JSON.stringify(this.buffer));
 

@@ -3,12 +3,18 @@ import jsonld from "jsonld";
 import { SECURITY_CONTEXT_URL } from "jsonld-signatures";
 import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
 import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
-import { blsCreateProofMulti } from "@yamdan/bbs-signatures";
+import {
+  blsCreateProofMulti,
+  blsVerifyProofMulti
+} from "@yamdan/bbs-signatures";
 import {
   Statement,
   CanonicalizeOptions,
   TermwiseCanonicalizeResult,
   DeriveProofMultiOptions,
+  VerifyProofMultiOptions,
+  VerifyProofResult,
+  VerifyProofMultiResult
 } from "./types";
 import { TermwiseStatement } from "./TermwiseStatement";
 import { randomBytes } from "@stablelib/random";
@@ -62,6 +68,25 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     );
 
     return { documentStatements, proofStatements };
+  }
+
+  /**
+   * Unname all the blank nodes
+   *
+   * @param documentStatements to deskolemize
+   *
+   * @returns {Promise<DeskolemizeResult>} deskolemized JSON-LD document and statements
+   */
+  async deskolemize(
+    skolemizedDocumentStatements: TermwiseStatement[]
+  ): Promise<TermwiseStatement[]> {
+    // Transform the blank node identifier placeholders for the document statements
+    // back into actual blank node identifiers
+    // e.g., <urn:bnid:_:c14n0> => _:c14n0
+    const documentStatements = skolemizedDocumentStatements.map(element =>
+      element.deskolemize()
+    );
+    return documentStatements;
   }
 
   /**
@@ -341,5 +366,96 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     }
 
     return results;
+  }
+
+  /**
+   * @param options {object} options for verifying the proof.
+   *
+   * @returns {Promise<{object}>} Resolves with the verification result.
+   */
+  async verifyProofMulti(
+    options: VerifyProofMultiOptions
+  ): Promise<VerifyProofMultiResult> {
+    const { inputDocuments, documentLoader, expansionMap, purpose } = options;
+
+    let result = true;
+    let results: VerifyProofResult[] = [];
+    for (const { document, proof } of inputDocuments) {
+      try {
+        proof.type = this.mappedDerivedProofType;
+
+        // canonicalize: get N-Quads from JSON-LD
+        const {
+          documentStatements: skolemizedDocumentStatements,
+          proofStatements
+        } = await this.canonicalize(document, proof, {
+          suite: this,
+          documentLoader,
+          expansionMap
+        });
+
+        // deskolemize: unname all the blank nodes
+        const documentStatements = await this.deskolemize(
+          skolemizedDocumentStatements
+        );
+
+        // FOR DEBUG: output console.log
+        this.logVerifiedStatements(
+          proof.proofValue,
+          documentStatements,
+          proofStatements
+        );
+
+        // Combine all the statements to be verified
+        const statementsToVerify: Uint8Array[] = proofStatements
+          .concat(documentStatements)
+          .flatMap((item: Statement) => item.serialize());
+
+        // Fetch the verification method
+        const verificationMethod = await this.getVerificationMethod({
+          proof,
+          document,
+          documentLoader,
+          expansionMap
+        });
+
+        // Construct a key pair class from the returned verification method
+        const key = verificationMethod.publicKeyJwk
+          ? await this.LDKeyClass.fromJwk(verificationMethod)
+          : await this.LDKeyClass.from(verificationMethod);
+
+        // Verify the proof
+        const verified = await blsVerifyProofMulti({
+          proof: new Uint8Array(Buffer.from(proof.proofValue, "base64")),
+          publicKey: new Uint8Array(key.publicKeyBuffer),
+          messages: statementsToVerify,
+          nonce: new Uint8Array(Buffer.from(proof.nonce as string, "base64"))
+        });
+
+        // Ensure proof was performed for a valid purpose
+        const { valid, error } = await purpose.validate(proof, {
+          document,
+          suite: this,
+          verificationMethod,
+          documentLoader,
+          expansionMap
+        });
+        if (!valid) {
+          throw error;
+        }
+
+        results.push(verified);
+        result = result && verified.verified;
+      } catch (error) {
+        results.push({ verified: false, error });
+        result = false;
+      }
+    }
+
+    if (results.length === 0) {
+      result = false;
+    }
+
+    return { verified: result, results };
   }
 }
