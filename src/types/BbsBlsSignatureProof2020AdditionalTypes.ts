@@ -92,10 +92,3 @@ export interface RevealResult {
    */
   revealedDocumentStatements: Statement[];
 }
-
-export interface BBSInput {
-  readonly terms: string[];
-  readonly revealIndicies: number[];
-  readonly issuerPublicKey: any;
-  readonly signature: Buffer;
-}

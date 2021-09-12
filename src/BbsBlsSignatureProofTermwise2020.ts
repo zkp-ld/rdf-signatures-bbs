@@ -9,7 +9,6 @@ import {
   CanonicalizeOptions,
   TermwiseCanonicalizeResult,
   DeriveProofMultiOptions,
-  BBSInput
 } from "./types";
 import { TermwiseStatement } from "./TermwiseStatement";
 import { randomBytes } from "@stablelib/random";
