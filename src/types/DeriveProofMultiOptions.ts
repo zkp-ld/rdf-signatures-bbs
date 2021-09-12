@@ -17,7 +17,7 @@
  */
 export interface DeriveProofMultiOptions {
   /**
-   * Input document, proof, and reveal document
+   * Input documents, proofs, and reveal documents
    */
   readonly inputDocuments: DeriveProofMultiInputDocs[];
   /**
