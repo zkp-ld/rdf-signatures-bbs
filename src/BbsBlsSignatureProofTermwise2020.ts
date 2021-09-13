@@ -356,7 +356,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     // Set the proof value on the derived proof
     const results = [];
     for (let i = 0; i < revealedDocuments.length; i++) {
-      derivedProofs[i].proofValue = Buffer.from(outputProofs[i]).toString(
+      derivedProofs[i].proofValue = Buffer.from(outputProofs[i].value).toString(
         "base64"
       );
       results.push({
