@@ -164,11 +164,11 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     derivedProof.nonce = Buffer.from(nonce).toString("base64");
 
     // FOR DEBUG: output console.log
-    this.logRevealedStatements(
-      skolemizedDocumentStatements,
-      proofStatements,
-      revealedDocumentStatements
-    );
+    // this.logRevealedStatements(
+    //   skolemizedDocumentStatements,
+    //   proofStatements,
+    //   revealedDocumentStatements
+    // );
 
     // Fetch the verification method
     const verificationMethod = await this.getVerificationMethod({
@@ -235,11 +235,11 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
       );
 
       // FOR DEBUG: output console.log
-      this.logVerifiedStatements(
-        proof.proofValue,
-        documentStatements,
-        proofStatements
-      );
+      // this.logVerifiedStatements(
+      //   proof.proofValue,
+      //   documentStatements,
+      //   proofStatements
+      // );
 
       // Combine all the statements to be verified
       const statementsToVerify: Uint8Array[] = proofStatements

@@ -11,9 +11,9 @@ export const signDeriveVerify = async (
   signSuite: any,
   proofSuite: any
 ) => {
-  console.log(`
-# Issuer: prepare Credential to be signed:
-${JSON.stringify(vc, null, 2)}`);
+  //   console.log(`
+  // # Issuer: prepare Credential to be signed:
+  // ${JSON.stringify(vc, null, 2)}`);
 
   // Issuer issues VC
   const signedVc = await jsigs.sign(vc, {
@@ -25,9 +25,9 @@ ${JSON.stringify(vc, null, 2)}`);
   });
   expect(signedVc).toBeDefined();
 
-  console.log(`
-# Issuer: issue VC:
-${JSON.stringify(signedVc, null, 2)}`);
+  //   console.log(`
+  // # Issuer: issue VC:
+  // ${JSON.stringify(signedVc, null, 2)}`);
 
   // Holder verifies VC
   const verifiedVc = await jsigs.verify(signedVc, {
@@ -39,13 +39,13 @@ ${JSON.stringify(signedVc, null, 2)}`);
   });
   expect(verifiedVc.verified).toBeTruthy();
 
-  console.log(`
-# Holder: verify VC:
-${JSON.stringify(verifiedVc, null, 2)}`);
+  //   console.log(`
+  // # Holder: verify VC:
+  // ${JSON.stringify(verifiedVc, null, 2)}`);
 
-  console.log(`
-# Holder: prepare Reveal Document as JSON-LD Frame:
-${JSON.stringify(reveal, null, 2)}`);
+  //   console.log(`
+  // # Holder: prepare Reveal Document as JSON-LD Frame:
+  // ${JSON.stringify(reveal, null, 2)}`);
 
   // Holder derives Proof
   const derivedProof = await deriveProof(signedVc, reveal, {
@@ -55,9 +55,9 @@ ${JSON.stringify(reveal, null, 2)}`);
   //expect(derivedProof.credentialSubject).toEqual(subject);
   expect(derivedProof.credentialSubject).toBeDefined();
 
-  console.log(`
-# Holder: derive Proof:
-${JSON.stringify(derivedProof, null, 2)}`);
+  //   console.log(`
+  // # Holder: derive Proof:
+  // ${JSON.stringify(derivedProof, null, 2)}`);
 
   // Verifier verifies proof
   const { document, proofs } = await getProofs({
@@ -74,9 +74,9 @@ ${JSON.stringify(derivedProof, null, 2)}`);
   });
   expect(result.verified).toBeTruthy();
 
-  console.log(`
-# Verifier: verify Proof:
-${JSON.stringify(result, null, 2)}`);
+  //   console.log(`
+  // # Verifier: verify Proof:
+  // ${JSON.stringify(result, null, 2)}`);
 };
 
 export const signDeriveVerifyMulti = async (
@@ -89,9 +89,9 @@ export const signDeriveVerifyMulti = async (
   for (const vcRevealKey of vcRevealKeys) {
     const { vc, key } = vcRevealKey;
 
-    console.log(`
-# Issuer: prepare Credential to be signed:
-${JSON.stringify(vc, null, 2)}`);
+    //     console.log(`
+    // # Issuer: prepare Credential to be signed:
+    // ${JSON.stringify(vc, null, 2)}`);
 
     // Issuer issues VC
     const signedVc = await jsigs.sign(vc, {
@@ -105,9 +105,9 @@ ${JSON.stringify(vc, null, 2)}`);
 
     vcRevealKey["signedVc"] = signedVc;
 
-    console.log(`
-# Issuer: issue VC:
-${JSON.stringify(signedVc, null, 2)}`);
+    //     console.log(`
+    // # Issuer: issue VC:
+    // ${JSON.stringify(signedVc, null, 2)}`);
   }
 
   const suite = new proofSuite();
@@ -124,13 +124,13 @@ ${JSON.stringify(signedVc, null, 2)}`);
     });
     expect(verifiedVc.verified).toBeTruthy();
 
-    console.log(`
-# Holder: verify VC:
-${JSON.stringify(verifiedVc, null, 2)}`);
+    //     console.log(`
+    // # Holder: verify VC:
+    // ${JSON.stringify(verifiedVc, null, 2)}`);
 
-    console.log(`
-# Holder: prepare Reveal Document as JSON-LD Frame:
-${JSON.stringify(revealDocument, null, 2)}`);
+    //     console.log(`
+    // # Holder: prepare Reveal Document as JSON-LD Frame:
+    // ${JSON.stringify(revealDocument, null, 2)}`);
 
     // Holder gets proofs
     const { proofs, document } = await getProofs({
@@ -171,5 +171,6 @@ ${JSON.stringify(revealDocument, null, 2)}`);
     documentLoader: customLoader,
     purpose: new jsigs.purposes.AssertionProofPurpose()
   });
+  console.log(result);
   expect(result.verified).toBeTruthy();
 };

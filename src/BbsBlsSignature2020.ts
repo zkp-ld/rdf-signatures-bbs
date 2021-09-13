@@ -169,13 +169,13 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
     ).flatMap((item: Statement) => item.serialize());
 
     // FOR DEBUG: output console.log
-    await this.logSignedStatements({
-      document,
-      proof,
-      documentLoader,
-      expansionMap,
-      compactProof
-    });
+    // await this.logSignedStatements({
+    //   document,
+    //   proof,
+    //   documentLoader,
+    //   expansionMap,
+    //   compactProof
+    // });
 
     // sign data
     proof = await this.sign({
@@ -229,13 +229,13 @@ ${numberedSignedStatements.join("\n")}`);
       ).flatMap((item: Statement) => item.serialize());
 
       // FOR DEBUG: output console.log
-      await this.logSignedStatements({
-        document,
-        proof,
-        documentLoader,
-        expansionMap,
-        compactProof: false
-      });
+      // await this.logSignedStatements({
+      //   document,
+      //   proof,
+      //   documentLoader,
+      //   expansionMap,
+      //   compactProof: false
+      // });
 
       // fetch verification method
       const verificationMethod = await this.getVerificationMethod({
