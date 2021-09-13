@@ -173,7 +173,8 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const signatureArray: Buffer[] = [];
     const revealedDocuments: any = [];
     const derivedProofs: any = [];
-    const equivs: { [uri: string]: [number, number][] } = Object.fromEntries(
+
+    const equivs: Map<string, [number, number][]> = new Map(
       hiddenUris.map(uri => [`<${uri}>`, []])
     );
 
@@ -236,6 +237,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       );
 
       // skolemize: name all the blank nodes
+      // e.g., _:c14n0 -> urn:bnid:_:c14n0
       const {
         skolemizedDocument,
         skolemizedDocumentStatements
@@ -251,9 +253,10 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         expansionMap
       });
 
-      // prepare anonymized JSON-LD document to be verified
+      // prepare anonymized JSON-LD document to be revealed to verifier
       // by replacing hiddenURIs by anonymized IDs
       // (e.g., "did:anon:0", tentatively...)
+      let anonymizedRevealedDocument = { ...revealedDocument };
       const anonymizeDocument = (doc: any) => {
         for (const [k, v] of Object.entries(doc)) {
           if (typeof v === "object") {
@@ -266,8 +269,13 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           }
         }
       };
+      anonymizeDocument(anonymizedRevealedDocument);
+      revealedDocuments.push(anonymizedRevealedDocument);
 
-      const anonymizedDocumentStatements = documentStatements.map(
+      // getIndicies: calculate reveal indicies
+      //   compare anonymized statements and anonymized revealed statements
+      //   to compute reveal indicies
+      const anonymizedStatementsOriginal = documentStatements.map(
         (s: TermwiseStatement) => {
           hiddenUris.forEach((uri, i) => {
             s = s.replace(uri, `did:anon:${i}`);
@@ -275,12 +283,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           return s;
         }
       );
-
-      let anonymizedRevealedDocument = { ...revealedDocument };
-      anonymizeDocument(anonymizedRevealedDocument);
-      revealedDocuments.push(anonymizedRevealedDocument);
-
-      const anonymizedRevealedDocumentStatements = await this.createVerifyDocumentData(
+      const anonymizedStatementsToBeVerified = await this.createVerifyDocumentData(
         anonymizedRevealedDocument,
         {
           suite,
@@ -289,25 +292,19 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           skipProofCompaction
         }
       );
-
-      // getIndicies: calculate reveal indicies
-      // let revealIndicies = this.getIndicies(
-      //   skolemizedDocumentStatements,
-      //   revealedDocumentStatements,
-      //   proofStatements
-      // );
       let revealIndicies = this.getIndicies(
-        anonymizedDocumentStatements,
-        anonymizedRevealedDocumentStatements,
+        anonymizedStatementsOriginal,
+        anonymizedStatementsToBeVerified,
         proofStatements
       );
       revealIndiciesArray.push(revealIndicies);
 
       // calculate index of hidden URIs
       terms.forEach((term, termIndex) => {
-        if (term in equivs) {
+        if (equivs.has(term)) {
           if (revealIndicies.includes(termIndex)) {
-            equivs[term].push([index, termIndex]);
+            let e = equivs.get(term) as [number, number][];
+            e.push([index, termIndex]);
           }
         }
       });
@@ -339,7 +336,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       index++;
     }
 
-    const equivsArray: [number, number][][] = Object.values(equivs);
+    const equivsArray: [number, number][][] = [...equivs.values()];
 
     // Compute the proof
     const outputProofs = await blsCreateProofMulti({
@@ -384,10 +381,12 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const messagesArray: Uint8Array[][] = [];
     const proofArray: Uint8Array[] = [];
     const issuerPublicKeyArray: Uint8Array[] = [];
+    const equivs: Map<string, [number, number][]> = new Map();
 
     let previous_nonce = "";
 
     try {
+      let index = 0;
       for (const { document, proof } of inputDocuments) {
         // TODO: handle the case of empty nonce
         if (proof.nonce !== previous_nonce && previous_nonce !== "") {
@@ -414,16 +413,31 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         });
 
         // deskolemize: unname all the blank nodes
+        // e.g., urn:bnid:_:c14n0 -> _:c14n0
         const documentStatements = await this.deskolemize(
           skolemizedDocumentStatements
         );
 
-        // Combine all the statements to be verified
-        const statementsToVerify: Uint8Array[] = proofStatements
+        // concat proof and document to be verified
+        const terms = proofStatements
           .concat(documentStatements)
-          .flatMap((item: Statement) => item.serialize());
+          .flatMap((item: TermwiseStatement) => item.toTerms());
 
-        messagesArray.push(statementsToVerify);
+        messagesArray.push(
+          terms.map((term: string) => new Uint8Array(Buffer.from(term)))
+        );
+
+        // TODO: extract blinding indicies from anonIDs `did:anon:${id}`
+        terms.forEach((term, termIndex) => {
+          let found = term.match(/^<did:anon:([0-9]+)>/);
+          if (found !== null) {
+            if (equivs.has(found[1])) {
+              equivs.get(found[1])?.push([index, termIndex]);
+            } else {
+              equivs.set(found[1], [[index, termIndex]]);
+            }
+          }
+        });
 
         // Fetch the verification method
         const verificationMethod = await this.getVerificationMethod({
@@ -439,14 +453,21 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           : await this.LDKeyClass.from(verificationMethod);
 
         issuerPublicKeyArray.push(new Uint8Array(key.publicKeyBuffer));
+
+        index++;
       }
+
+      const equivsArray: [number, number][][] = [...equivs.entries()]
+        .sort()
+        .map(e => e[1]);
 
       // Verify the proof
       const verified = await blsVerifyProofMulti({
         proof: proofArray,
         publicKey: issuerPublicKeyArray,
         messages: messagesArray,
-        nonce: new Uint8Array(Buffer.from(previous_nonce as string, "base64"))
+        nonce: new Uint8Array(Buffer.from(previous_nonce as string, "base64")),
+        equivs: equivsArray
       });
 
       // TODO: redefine validation process
