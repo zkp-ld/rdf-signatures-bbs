@@ -379,7 +379,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const results: VerifyProofResult[] = [];
 
     const messagesArray: Uint8Array[][] = [];
-    const proofArray: Uint8Array[] = [];
+    const proofArray: { value: Uint8Array }[] = [];
     const issuerPublicKeyArray: Uint8Array[] = [];
     const equivs: Map<string, [number, number][]> = new Map();
 
@@ -396,9 +396,9 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         }
         previous_nonce = proof.nonce;
 
-        proofArray.push(
-          new Uint8Array(Buffer.from(proof.proofValue, "base64"))
-        );
+        proofArray.push({
+          value: new Uint8Array(Buffer.from(proof.proofValue, "base64"))
+        });
 
         proof.type = this.mappedDerivedProofType;
 
