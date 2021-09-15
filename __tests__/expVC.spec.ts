@@ -59,6 +59,8 @@ describe("experimental verifiable credentials", () => {
       "http://example.org/credentials/1234",
       "http://example.org/credentials/9876",
       "http://example.org/credentials/abcd",
+      "dummy",
+      "dummy",
       "did:example:holder1",
       "did:example:cityA"
     ];
@@ -69,6 +71,27 @@ describe("experimental verifiable credentials", () => {
         { vc: vc2, revealDocument: expRevealDocument2, key: expKey2 },
         { vc: vc3, revealDocument: expRevealDocument3, key: expKey3 }
       ],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+  });
+
+  it("[TermwiseStatement] should sign single VC, derive a proof from it, and verify the proof", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "http://example.org/credentials/9876",
+      "http://example.org/credentials/abcd",
+      "dummy",
+      "dummy",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
+
+    await signDeriveVerifyMulti(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
       BbsBlsSignatureTermwise2020,
