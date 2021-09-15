@@ -375,9 +375,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   ): Promise<VerifyProofMultiResult> {
     const { inputDocuments, documentLoader, expansionMap, purpose } = options;
 
-    let result = true;
-    const results: VerifyProofResult[] = [];
-
     const messagesArray: Uint8Array[][] = [];
     const proofArray: { value: Uint8Array }[] = [];
     const issuerPublicKeyArray: Uint8Array[] = [];
@@ -482,17 +479,9 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       // if (!valid) {
       //   throw error;
       // }
-
-      results.push(verified);
-      result = result && verified.verified;
+      return verified;
     } catch (error) {
       return { verified: false, error };
     }
-
-    if (results.length === 0) {
-      result = false;
-    }
-
-    return { verified: result, results };
   }
 }
