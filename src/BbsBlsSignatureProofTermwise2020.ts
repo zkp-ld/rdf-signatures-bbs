@@ -13,11 +13,57 @@ import {
   TermwiseCanonicalizeResult,
   DeriveProofMultiOptions,
   VerifyProofMultiOptions,
-  VerifyProofResult,
   VerifyProofMultiResult
 } from "./types";
 import { TermwiseStatement } from "./TermwiseStatement";
 import { randomBytes } from "@stablelib/random";
+
+class URIAnonymizer {
+  private prefix = "urn:anon:";
+  private regexp = /^<urn:anon:([0-9]+)>/;
+
+  private targets: string[] = [];
+
+  constructor();
+  constructor(targets: string[]);
+  constructor(targets?: string[]) {
+    if (targets) {
+      this.targets = targets;
+    }
+  }
+
+  anonymizeJsonld(doc: any): any {
+    const anonymizeDocument = (doc: any) => {
+      for (const [k, v] of Object.entries(doc)) {
+        if (typeof v === "object") {
+          anonymizeDocument(v);
+        } else if (typeof v === "string") {
+          const iid = this.targets.indexOf(v);
+          if (iid != -1) {
+            doc[k] = `${this.prefix}${iid}`;
+          }
+        }
+      }
+    };
+
+    let res = { ...doc }; // copy input
+    anonymizeDocument(res);
+    return res;
+  }
+
+  anonymizeStatement(s: Statement): Statement {
+    this.targets.forEach((uri, i) => {
+      s = s.replace(uri, `${this.prefix}${i}`);
+    });
+    return s;
+  }
+
+  extractAnonID(t: string): string | null {
+    let found = t.match(this.regexp);
+    if (found === null) return null;
+    return found[1];
+  }
+}
 
 export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   constructor(options: any = {}) {
@@ -162,6 +208,8 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     } = options;
     let { nonce } = options;
 
+    const anonymizer = new URIAnonymizer(hiddenUris);
+
     // Create a nonce if one is not supplied
     if (!nonce) {
       nonce = await randomBytes(50);
@@ -255,33 +303,16 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // prepare anonymized JSON-LD document to be revealed to verifier
       // by replacing hiddenURIs by anonymized IDs
-      // (e.g., "did:anon:0", tentatively...)
-      let anonymizedRevealedDocument = { ...revealedDocument };
-      const anonymizeDocument = (doc: any) => {
-        for (const [k, v] of Object.entries(doc)) {
-          if (typeof v === "object") {
-            anonymizeDocument(v);
-          } else if (typeof v === "string") {
-            const iid = hiddenUris.indexOf(v);
-            if (iid != -1) {
-              doc[k] = `did:anon:${iid}`;
-            }
-          }
-        }
-      };
-      anonymizeDocument(anonymizedRevealedDocument);
+      let anonymizedRevealedDocument = anonymizer.anonymizeJsonld(
+        revealedDocument
+      );
       revealedDocuments.push(anonymizedRevealedDocument);
 
       // getIndicies: calculate reveal indicies
       //   compare anonymized statements and anonymized revealed statements
       //   to compute reveal indicies
       const anonymizedStatementsOriginal = documentStatements.map(
-        (s: TermwiseStatement) => {
-          hiddenUris.forEach((uri, i) => {
-            s = s.replace(uri, `did:anon:${i}`);
-          });
-          return s;
-        }
+        (s: TermwiseStatement) => anonymizer.anonymizeStatement(s)
       );
       const anonymizedStatementsToBeVerified = await this.createVerifyDocumentData(
         anonymizedRevealedDocument,
@@ -316,12 +347,10 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         documentLoader,
         expansionMap
       });
-
       // Construct a key pair class from the returned verification method
       const issuerPublicKey = verificationMethod.publicKeyJwk
         ? await this.LDKeyClass.fromJwk(verificationMethod)
         : await this.LDKeyClass.from(verificationMethod);
-
       issuerPublicKeyArray.push(issuerPublicKey.publicKeyBuffer);
 
       // Set the relevant proof elements on the derived proof from the input proof
@@ -330,7 +359,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       derivedProof.created = proof.created;
       // Set the nonce on the derived proof
       derivedProof.nonce = Buffer.from(nonce).toString("base64");
-
       derivedProofs.push(derivedProof);
 
       index++;
@@ -380,6 +408,8 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const issuerPublicKeyArray: Uint8Array[] = [];
     const equivs: Map<string, [number, number][]> = new Map();
 
+    const anonymizer = new URIAnonymizer();
+
     let previous_nonce = "";
 
     try {
@@ -424,14 +454,14 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           terms.map((term: string) => new Uint8Array(Buffer.from(term)))
         );
 
-        // TODO: extract blinding indicies from anonIDs `did:anon:${id}`
+        // extract blinding indicies from anonIDs
         terms.forEach((term, termIndex) => {
-          let found = term.match(/^<did:anon:([0-9]+)>/);
+          let found = anonymizer.extractAnonID(term);
           if (found !== null) {
-            if (equivs.has(found[1])) {
-              equivs.get(found[1])?.push([index, termIndex]);
+            if (equivs.has(found)) {
+              equivs.get(found)?.push([index, termIndex]);
             } else {
-              equivs.set(found[1], [[index, termIndex]]);
+              equivs.set(found, [[index, termIndex]]);
             }
           }
         });
