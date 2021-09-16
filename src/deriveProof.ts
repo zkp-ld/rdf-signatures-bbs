@@ -127,3 +127,150 @@ export const deriveProof = async (
 
   return derivedProof.document;
 };
+
+/**
+ * Derives proofs from documents featuring supported linked data proofs
+ *
+ * NOTE - This is a temporary API extending JSON-LD signatures
+ *
+ * @param documents pair(s) of two documents s.t., (1) featuring a linked data proof capable of proof derivation; and (2) JSON-LD frame describing the terms to selectively derive from the proof documents
+ * @param hiddenUris URI(s) to be hidden in the derived proofs
+ * @param options Options for proof derivation (* `options.suite` must implement deriveProofMulti method)
+ */
+export const deriveProofMulti = async (
+  documents: [any, any][],
+  hiddenUris: string[],
+  { suite, documentLoader, expansionMap, skipProofCompaction, nonce }: any
+): Promise<any> => {
+  if (!suite) {
+    throw new TypeError('"options.suite" is required.');
+  }
+
+  if (!Array.isArray(documents)) {
+    throw new TypeError("documents should be an array not an object.");
+  }
+
+  const inputDocuments = await Promise.all(
+    documents.map(async ([proofDocument, revealDocument]) => {
+      const { proofs, document } = await getProofs({
+        document: proofDocument,
+        proofType: suite.supportedDeriveProofType,
+        documentLoader,
+        expansionMap,
+        skipProofCompaction
+      });
+
+      if (proofs.length === 0) {
+        throw new Error(
+          `There were not any proofs provided that can be used to derive a proof with this suite.`
+        );
+      }
+
+      return { document, proof: proofs[0], revealDocument };
+    })
+  );
+
+  const derivedProofs = await suite.deriveProofMulti({
+    inputDocuments,
+    documentLoader,
+    expansionMap,
+    hiddenUris,
+    nonce
+  });
+
+  for (const derivedProof of derivedProofs) {
+    if (!skipProofCompaction) {
+      /* eslint-disable prefer-const */
+      let expandedProof: any = {
+        [SECURITY_PROOF_URL]: {
+          "@graph": derivedProof.proof
+        }
+      };
+
+      // account for type-scoped `proof` definition by getting document types
+      const { types, alias } = await getTypeInfo(derivedProof.document, {
+        documentLoader,
+        expansionMap
+      });
+
+      expandedProof["@type"] = types;
+
+      const ctx = jsonld.getValues(derivedProof.document, "@context");
+
+      const compactProof = await jsonld.compact(expandedProof, ctx, {
+        documentLoader,
+        expansionMap,
+        compactToRelative: false
+      });
+
+      delete compactProof[alias];
+      delete compactProof["@context"];
+
+      /**
+       * removes the @included tag when multiple proofs exist because the
+       * @included tag messes up the canonicalized bytes leading to a bad
+       * signature that won't verify.
+       **/
+      if (compactProof.proof["@included"]) {
+        compactProof.proof = compactProof.proof["@included"];
+      }
+
+      // add proof to document
+      const key = Object.keys(compactProof)[0];
+      jsonld.addValue(derivedProof.document, key, compactProof[key]);
+    } else {
+      delete derivedProof.proof["@context"];
+      jsonld.addValue(derivedProof.document, "proof", derivedProof.proof);
+    }
+  }
+
+  return derivedProofs.map((derivedProof: any) => derivedProof.document);
+};
+
+/**
+ * Verifies proofs from documents featuring supported linked data proofs
+ *
+ * NOTE - This is a temporary API extending JSON-LD signatures
+ *
+ * @param documents documents featuring linked data proofs capable of proof derivation
+ * @param options Options for proof derivation (* `options.suite` must implement verifyProofMulti method)
+ */
+export const verifyProofMulti = async (
+  documents: any[],
+  { suite, purpose, documentLoader, expansionMap, skipProofCompaction }: any
+): Promise<any> => {
+  if (!suite) {
+    throw new TypeError('"options.suite" is required.');
+  }
+
+  if (!Array.isArray(documents)) {
+    throw new TypeError("documents should be an array not an object.");
+  }
+
+  const inputDocuments = await Promise.all(
+    documents.map(async doc => {
+      const { proofs, document } = await getProofs({
+        document: doc,
+        proofType: suite.proofType,
+        documentLoader,
+        expansionMap,
+        skipProofCompaction
+      });
+
+      if (proofs.length === 0) {
+        throw new Error(
+          `There were not any proofs provided that can be used to derive a proof with this suite.`
+        );
+      }
+
+      return { document, proof: proofs[0] };
+    })
+  );
+
+  return suite.verifyProofMulti({
+    inputDocuments,
+    documentLoader,
+    expansionMap,
+    purpose
+  });
+};

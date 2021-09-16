@@ -18,4 +18,4 @@ export { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
 export { BbsBlsSignatureProofTermwise2020 } from "./BbsBlsSignatureProofTermwise2020";
 export * from "./types";
 
-export { deriveProof } from "./deriveProof";
+export { deriveProof, deriveProofMulti, verifyProofMulti } from "./deriveProof";
