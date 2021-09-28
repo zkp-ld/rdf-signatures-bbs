@@ -39,7 +39,9 @@ import testSignedNestedVcDocument from "./data/test_signed_nested_vc_document.js
 import testProofNestedVcDocument from "./data/test_proof_nested_vc_document.json";
 import testPartialProofNestedVcDocument from "./data/test_partial_proof_nested_vc_document.json";
 import testAnonymousVcDocument from "./data/test_anonymous_vc.json";
+import testAnonymousVcComplexDocument from "./data/test_anonymous_vc_complex.json";
 import testRevealAnonymousVcDocument from "./data/test_anonymous_vc_reveal_document.json";
+import testRevealAnonymousVcComplexDocument from "./data/test_anonymous_vc_complex_reveal_document.json";
 import testNestedAnonymousVcDocument from "./data/test_nested_anonymous_vc_document.json";
 import expExampleBls12381KeyPair from "./data/exp_exampleBls12381KeyPair.json";
 import expExampleBls12381KeyPair2 from "./data/exp_exampleBls12381KeyPair2.json";
@@ -91,5 +93,7 @@ export {
   expRevealDocument,
   expRevealDocument2,
   expRevealDocument3,
-  testSignedDocumentTermwise
+  testSignedDocumentTermwise,
+  testAnonymousVcComplexDocument,
+  testRevealAnonymousVcComplexDocument
 };

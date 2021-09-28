@@ -5,14 +5,20 @@ import {
   testRevealAnonymousVcDocument,
   testNestedRevealDocument,
   testNestedRevealFullDocument,
-  testNestedAnonymousVcDocument
+  testNestedAnonymousVcDocument,
+  testAnonymousVcComplexDocument,
+  testRevealAnonymousVcComplexDocument
 } from "./__fixtures__";
 import {
   Bls12381G2KeyPair,
   BbsTermwiseSignature2021,
   BbsTermwiseSignatureProof2021
 } from "../src/index";
-import { signDeriveVerifyMulti, signDeriveVerifyMultiJSigLike } from "./utils";
+import {
+  signDeriveVerify,
+  signDeriveVerifyMulti,
+  signDeriveVerifyMultiJSigLike
+} from "./utils";
 
 const key = new Bls12381G2KeyPair(exampleBls12381KeyPair);
 
@@ -92,6 +98,21 @@ describe("BbsTermwise2021 and BbsTermwiseSignature2021", () => {
       customLoader,
       BbsTermwiseSignature2021,
       BbsTermwiseSignatureProof2021
+    );
+  });
+
+  it("should sign, derive proof, and verify proof on anonymous nested complex and partially revealed verifiable credential", async () => {
+    await signDeriveVerify(
+      testAnonymousVcComplexDocument,
+      testRevealAnonymousVcComplexDocument,
+      key,
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021,
+      {
+        id: "urn:bnid:_:c14n2",
+        batchNumber: "1183738569",
+        type: "VaccinationEvent"
+      }
     );
   });
 });

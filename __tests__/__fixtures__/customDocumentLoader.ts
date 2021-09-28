@@ -16,10 +16,13 @@ import { extendContextLoader } from "jsonld-signatures";
 import citizenVocab from "./contexts/citizen_vocab.json";
 import credentialContext from "./contexts/credential_vocab.json";
 import odrlContext from "./contexts/odrl.json";
+import blsContext from "./contexts/bls.json";
 import securityV3 from "./contexts/v3_unstable.json";
 import bbsContext from "./contexts/bbs.json";
 import jwsContext from "./contexts/jws.json";
+import vax from "./contexts/vax.json";
 import vcExampleContext from "./contexts/vc_example_vocab.json";
+import did from "./contexts/did.json";
 import schemaOrg from "./contexts/schemaOrg.json";
 import exampleDidKey from "./data/did_example_489398593_test.json";
 import exampleDidDoc from "./data/did_example_489398593.json";
@@ -33,8 +36,8 @@ import expExampleDidKey2 from "./data/exp_didkey_issuer2.json";
 import expExampleDidDoc2 from "./data/exp_diddoc_issuer2.json";
 import expExampleDidKey3 from "./data/exp_didkey_issuer3.json";
 import expExampleDidDoc3 from "./data/exp_diddoc_issuer3.json";
-import bbsWithProofContext from "./contexts/bbs_with_proof.json";
 import bbsTermwise from "./contexts/bbs-termwise-2021.json";
+import exampleDidKey2 from "./data/didkey.json";
 
 export const documents: any = {
   "https://w3id.org/security/v3-unstable": securityV3,
@@ -43,6 +46,7 @@ export const documents: any = {
   "https://www.w3.org/2018/credentials/v1": credentialContext,
   "https://www.w3.org/ns/odrl.jsonld": odrlContext,
   "https://w3id.org/security/suites/jws-2020/v1": jwsContext,
+  "https://w3id.org/security/suites/bls12381-2020/v1": blsContext,
   "did:example:489398593#test": exampleDidKey,
   "did:example:489398593": exampleDidDoc,
   "did:example:82612387612873#test": exampleDid826Key,
@@ -60,8 +64,13 @@ export const documents: any = {
   "did:example:issuer2#bbs-bls-key1": expExampleDidKey2,
   "did:example:issuer3": expExampleDidDoc3,
   "did:example:issuer3#bbs-bls-key1": expExampleDidKey3,
-  "https://w3id.org/security/suites/bls12381-2020/v1": bbsWithProofContext,
-  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld": bbsTermwise
+  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld": bbsTermwise,
+  "https://w3id.org/vaccination/v1": vax,
+  "did:key:z5TcDVRemCWTd6qwxxhFeYDpQhK4pUYtuutodKP2MSDjzcqokf6cNCARsaF8JNZQ8FzWAYfFZbUqUCUDMWeWp8xVkRSr9z5Tf5k2tJgpjsqNM23E4VjHsCzN6WcSvLGKSA9VEMTc1d2F81mCCauerPY1VC8vPTkvtmEQZfmaZ54x15PJwbhkBxaEbydWjd7D2CWHbkFg9":
+    exampleDidKey2,
+  "did:key:z5TcDVRemCWTd6qwxxhFeYDpQhK4pUYtuutodKP2MSDjzcqokf6cNCARsaF8JNZQ8FzWAYfFZbUqUCUDMWeWp8xVkRSr9z5Tf5k2tJgpjsqNM23E4VjHsCzN6WcSvLGKSA9VEMTc1d2F81mCCauerPY1VC8vPTkvtmEQZfmaZ54x15PJwbhkBxaEbydWjd7D2CWHbkFg9#zUC7GEUemCyub4Q5mAhXkNZVcVrCWz57UvxaYrd2o8iBfDMhJhAVc5U47x5J55kYHVhud5oWFXC4DyeywbcKLaqi2NjbyMgTREk8J6ypRU9drJBnVXXboReHLhhd1T4QU21Gzhb":
+    exampleDidKey2,
+  "https://www.w3.org/ns/did/v1": did
 };
 
 const customDocLoader = (url: string): any => {
