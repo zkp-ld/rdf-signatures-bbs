@@ -125,7 +125,7 @@ export class TermwiseStatement implements Statement {
   }
 
   serialize(): Uint8Array[] {
-    return this.toTerms().map(term => new Uint8Array(Buffer.from(term)));
+    return this.toTerms().map((term) => new Uint8Array(Buffer.from(term)));
   }
 
   skolemize(): Statement {

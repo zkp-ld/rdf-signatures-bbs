@@ -31,10 +31,12 @@ export interface DeriveProofOptions {
   /**
    * Optional custom document loader
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   documentLoader?: Function;
   /**
    * Optional expansion map
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   expansionMap?: Function;
   /**
    * Nonce to include in the derived proof

@@ -248,7 +248,7 @@ export const verifyProofMulti = async (
   }
 
   const inputDocuments = await Promise.all(
-    documents.map(async doc => {
+    documents.map(async (doc) => {
       const { proofs, document } = await getProofs({
         document: doc,
         proofType: suite.proofType,

@@ -13,7 +13,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
-import { suites, SECURITY_CONTEXT_URL } from "jsonld-signatures";
+import { suites } from "jsonld-signatures";
 import { blsCreateProof, blsVerifyProof } from "@yamdan/bbs-signatures";
 import {
   DeriveProofOptions,
@@ -34,28 +34,22 @@ import { randomBytes } from "@stablelib/random";
 import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
 import { StringStatement } from "./StringStatement";
 
+const SECURITY_CONTEXT_URL = [
+  "https://w3id.org/security/suites/bls12381-2020/v1"
+];
+
 export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
   constructor({ useNativeCanonize, key, LDKeyClass }: any = {}) {
     super({
-      type: "sec:BbsBlsSignatureProof2020"
+      type: "BbsBlsSignatureProof2020"
     });
 
     this.proof = {
-      "@context": [
-        {
-          sec: "https://w3id.org/security#",
-          proof: {
-            "@id": "sec:proof",
-            "@type": "@id",
-            "@container": "@graph"
-          }
-        },
-        "https://w3id.org/security/bbs/v1"
-      ],
+      "@context": ["https://w3id.org/security/suites/bls12381-2020/v1"],
       type: "BbsBlsSignatureProof2020"
     };
-    this.mappedDerivedProofType =
-      "https://w3id.org/security#BbsBlsSignature2020";
+
+    this.mappedDerivedProofType = "BbsBlsSignature2020";
     this.supportedDeriveProofType =
       BbsBlsSignatureProof2020.supportedDerivedProofType;
 
@@ -67,6 +61,24 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     this.Statement = StringStatement;
   }
 
+  // ported from
+  // https://github.com/transmute-industries/verifiable-data/blob/main/packages/bbs-bls12381-signature-2020/src/BbsBlsSignatureProof2020.ts
+  ensureSuiteContext({ document }: any): void {
+    const contextUrl = "https://w3id.org/security/suites/bls12381-2020/v1";
+    if (
+      document["@context"] === contextUrl ||
+      (Array.isArray(document["@context"]) &&
+        document["@context"].includes(contextUrl))
+    ) {
+      // document already includes the required context
+      return;
+    }
+    throw new TypeError(
+      `The document to be signed must contain this suite's @context, ` +
+        `"${contextUrl}".`
+    );
+  }
+
   /**
    * Derive a proof from a proof and reveal document
    *
@@ -74,6 +86,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
    *
    * @returns {Promise<object>} Resolves with the derived proof object.
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   async deriveProof(options: DeriveProofOptions): Promise<object> {
     const {
       document,
@@ -132,10 +145,8 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
     );
 
     // skolemize: name all the blank nodes
-    const {
-      skolemizedDocument,
-      skolemizedDocumentStatements
-    } = await this.skolemize(documentStatements);
+    const { skolemizedDocument, skolemizedDocumentStatements } =
+      await this.skolemize(documentStatements);
 
     // reveal: extract revealed parts using JSON-LD Framing
     const { revealedDocument, revealedDocumentStatements } = await this.reveal(
@@ -280,7 +291,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
       }
 
       return verified;
-    } catch (error) {
+    } catch (error: any) {
       return { verified: false, error };
     }
   }
@@ -342,7 +353,7 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
   getStatements(nQuads: string): Statement[] {
     return nQuads
       .split("\n")
-      .filter(_ => _.length > 0)
+      .filter((_) => _.length > 0)
       .map((s: string) => new this.Statement(s));
   }
 
@@ -458,10 +469,12 @@ export class BbsBlsSignatureProof2020 extends suites.LinkedDataProof {
   ): void {
     const numberOfProofStatements = proofStatements.length;
     const numberedRevealedDocumentStatements = revealedDocumentStatements.map(
-      statement =>
-        `# ${skolemizedDocumentStatements.findIndex(
-          e => e.toString() === statement.toString()
-        ) + numberOfProofStatements}\n${statement}`
+      (statement) =>
+        `# ${
+          skolemizedDocumentStatements.findIndex(
+            (e) => e.toString() === statement.toString()
+          ) + numberOfProofStatements
+        }\n${statement}`
     );
 
     const numberedProofStatements = proofStatements.map(
@@ -512,22 +525,16 @@ ${verifiedStatements.join("\n")}`);
     proof: string,
     options: CanonicalizeOptions
   ): Promise<CanonicalizeResult> {
-    const {
-      suite,
-      documentLoader,
-      expansionMap,
-      skipProofCompaction
-    } = options;
+    const { suite, documentLoader, expansionMap, skipProofCompaction } =
+      options;
 
     // Get the input document statements
-    const documentStatements: Statement[] = await suite.createVerifyDocumentData(
-      document,
-      {
+    const documentStatements: Statement[] =
+      await suite.createVerifyDocumentData(document, {
         documentLoader,
         expansionMap,
         compactProof: !skipProofCompaction
-      }
-    );
+      });
 
     // Get the proof statements
     const proofStatements: Statement[] = await suite.createVerifyProofData(
@@ -553,7 +560,7 @@ ${verifiedStatements.join("\n")}`);
     // Transform any blank node identifiers for the input
     // document statements into actual node identifiers
     // e.g., _:c14n0 => <urn:bnid:_:c14n0>
-    const skolemizedDocumentStatements = documentStatements.map(element =>
+    const skolemizedDocumentStatements = documentStatements.map((element) =>
       element.skolemize()
     );
 
@@ -578,7 +585,7 @@ ${verifiedStatements.join("\n")}`);
     // Transform the blank node identifier placeholders for the document statements
     // back into actual blank node identifiers
     // e.g., <urn:bnid:_:c14n0> => _:c14n0
-    const documentStatements = skolemizedDocumentStatements.map(element =>
+    const documentStatements = skolemizedDocumentStatements.map((element) =>
       element.deskolemize()
     );
     return documentStatements;
@@ -645,9 +652,9 @@ ${verifiedStatements.join("\n")}`);
 
     //Reveal the statements indicated from the reveal document
     const documentRevealIndicies = revealedDocumentStatements.map(
-      key =>
+      (key) =>
         skolemizedDocumentStatements.findIndex(
-          e => e.toString() === key.toString()
+          (e) => e.toString() === key.toString()
         ) + numberOfProofStatements
     );
 

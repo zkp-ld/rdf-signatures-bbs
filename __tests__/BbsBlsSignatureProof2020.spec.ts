@@ -128,7 +128,24 @@ describe("BbsBlsSignatureProof2020", () => {
   it("should not derived proof with document featuring missing info", async () => {
     const suite = new BbsBlsSignatureProof2020();
 
-    const input = {
+    type TestSignedDocumentType = {
+      "@context": string[];
+      "@type": string;
+      firstName: string;
+      lastName: string;
+      jobTitle: string;
+      telephone: string;
+      email?: string;
+      proof: {
+        type: string;
+        created: string;
+        proofPurpose: string;
+        proofValue: string;
+        verificationMethod: string;
+      };
+    };
+
+    const input: TestSignedDocumentType = {
       ...testSignedDocument
     };
 

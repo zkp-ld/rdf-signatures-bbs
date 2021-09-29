@@ -20,8 +20,7 @@ export const signDeriveVerify = async (
     suite: new signSuite({ key }),
     purpose: new jsigs.purposes.AssertionProofPurpose(),
     documentLoader: customLoader,
-    expansionMap: false,
-    compactProof: true
+    expansionMap: false
   });
   expect(signedVc).toBeDefined();
 
@@ -34,8 +33,7 @@ ${JSON.stringify(signedVc, null, 2)}`);
     suite: new signSuite(),
     purpose: new jsigs.purposes.AssertionProofPurpose(),
     documentLoader: customLoader,
-    expansionMap: false,
-    compactProof: true
+    expansionMap: false
   });
   expect(verifiedVc.verified).toBeTruthy();
 
@@ -94,8 +92,7 @@ export const signDeriveVerifyMulti = async (
       suite: new signSuite({ key }),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
-      expansionMap: false,
-      compactProof: true
+      expansionMap: false
     });
     expect(signedVc).toBeDefined();
 
@@ -108,8 +105,7 @@ export const signDeriveVerifyMulti = async (
       suite: new signSuite(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
-      expansionMap: false,
-      compactProof: true
+      expansionMap: false
     });
     expect(verifiedVc.verified).toBeTruthy();
   }
@@ -184,8 +180,7 @@ export const signDeriveVerifyMultiJSigLike = async (
           suite: new signSuite({ key }),
           purpose: new jsigs.purposes.AssertionProofPurpose(),
           documentLoader: customLoader,
-          expansionMap: false,
-          compactProof: true
+          expansionMap: false
         });
         expect(signedVc).toBeDefined();
         return [signedVc, revealDocument];
@@ -199,8 +194,7 @@ export const signDeriveVerifyMultiJSigLike = async (
       suite: new signSuite(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
-      expansionMap: false,
-      compactProof: true
+      expansionMap: false
     });
     expect(verifiedVc.verified).toBeTruthy();
   }
@@ -233,8 +227,7 @@ ${JSON.stringify(derivedProofs[i], null, 2)}`);
     suite: new proofSuite(),
     purpose: new jsigs.purposes.AssertionProofPurpose(),
     documentLoader: customLoader,
-    expansionMap: false,
-    compactProof: true
+    expansionMap: false
   });
 
   console.log(`

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
-import { SECURITY_CONTEXT_URL } from "jsonld-signatures";
 import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
 import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
 import {
@@ -18,6 +17,10 @@ import {
 import { TermwiseStatement } from "./TermwiseStatement";
 import { randomBytes } from "@stablelib/random";
 
+const SECURITY_CONTEXT_URL = [
+  "https://w3id.org/security/suites/bls12381-2020/v1"
+];
+
 class URIAnonymizer {
   private prefix = "urn:anon:";
   private regexp = /^<urn:anon:([0-9]+)>/;
@@ -33,7 +36,7 @@ class URIAnonymizer {
   }
 
   anonymizeJsonld(doc: any): any {
-    const anonymizeDocument = (doc: any) => {
+    const anonymizeDocument = (doc: any): void => {
       for (const [k, v] of Object.entries(doc)) {
         if (typeof v === "object") {
           anonymizeDocument(v);
@@ -46,7 +49,7 @@ class URIAnonymizer {
       }
     };
 
-    let res = { ...doc }; // copy input
+    const res = { ...doc }; // copy input
     anonymizeDocument(res);
     return res;
   }
@@ -59,7 +62,7 @@ class URIAnonymizer {
   }
 
   extractAnonID(t: string): string | null {
-    let found = t.match(this.regexp);
+    const found = t.match(this.regexp);
     if (found === null) return null;
     return found[1];
   }
@@ -86,32 +89,24 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     proof: string,
     options: CanonicalizeOptions
   ): Promise<TermwiseCanonicalizeResult> {
-    const {
-      suite,
-      documentLoader,
-      expansionMap,
-      skipProofCompaction
-    } = options;
+    const { suite, documentLoader, expansionMap, skipProofCompaction } =
+      options;
 
     // Get the input document statements
-    const documentStatements: TermwiseStatement[] = await suite.createVerifyDocumentData(
-      document,
-      {
+    const documentStatements: TermwiseStatement[] =
+      await suite.createVerifyDocumentData(document, {
         documentLoader,
         expansionMap,
         compactProof: !skipProofCompaction
-      }
-    );
+      });
 
     // Get the proof statements
-    const proofStatements: TermwiseStatement[] = await suite.createVerifyProofData(
-      proof,
-      {
+    const proofStatements: TermwiseStatement[] =
+      await suite.createVerifyProofData(proof, {
         documentLoader,
         expansionMap,
         compactProof: !skipProofCompaction
-      }
-    );
+      });
 
     return { documentStatements, proofStatements };
   }
@@ -129,7 +124,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     // Transform the blank node identifier placeholders for the document statements
     // back into actual blank node identifiers
     // e.g., <urn:bnid:_:c14n0> => _:c14n0
-    const documentStatements = skolemizedDocumentStatements.map(element =>
+    const documentStatements = skolemizedDocumentStatements.map((element) =>
       element.deskolemize()
     );
     return documentStatements;
@@ -163,9 +158,9 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
     //Reveal the statements indicated from the reveal document
     const documentRevealIndicies = revealedDocumentStatements.map(
-      key =>
+      (key) =>
         skolemizedDocumentStatements.findIndex(
-          e => e.toString() === key.toString()
+          (e) => e.toString() === key.toString()
         ) + numberOfProofStatements
     );
 
@@ -183,9 +178,9 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
     // Expand indicies to fit termwise encoding
     // e.g., [0, 2, 5] -> [0,1,2,3, 8,9,10,11, 20,21,22,23]
-    const revealIndicies = BaseRevealIndicies.flatMap(index =>
+    const revealIndicies = BaseRevealIndicies.flatMap((index) =>
       [...Array(NUM_OF_TERMS_IN_STATEMENT).keys()].map(
-        i => index * NUM_OF_TERMS_IN_STATEMENT + i
+        (i) => index * NUM_OF_TERMS_IN_STATEMENT + i
       )
     );
     return revealIndicies;
@@ -198,6 +193,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
    *
    * @returns {Promise<object>} Resolves with the derived proof object.
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   async deriveProofMulti(options: DeriveProofMultiOptions): Promise<object> {
     const {
       inputDocuments,
@@ -223,7 +219,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const derivedProofs: any = [];
 
     const equivs: Map<string, [number, number][]> = new Map(
-      hiddenUris.map(uri => [`<${uri}>`, []])
+      hiddenUris.map((uri) => [`<${uri}>`, []])
     );
 
     let index = 0;
@@ -286,26 +282,23 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // skolemize: name all the blank nodes
       // e.g., _:c14n0 -> urn:bnid:_:c14n0
-      const {
-        skolemizedDocument,
-        skolemizedDocumentStatements
-      } = await this.skolemize(documentStatements);
+      const { skolemizedDocument } = await this.skolemize(documentStatements);
 
       // reveal: extract revealed parts using JSON-LD Framing
-      const {
-        revealedDocument,
-        revealedDocumentStatements
-      } = await this.reveal(skolemizedDocument, revealDocument, {
-        suite,
-        documentLoader,
-        expansionMap
-      });
+      const { revealedDocument } = await this.reveal(
+        skolemizedDocument,
+        revealDocument,
+        {
+          suite,
+          documentLoader,
+          expansionMap
+        }
+      );
 
       // prepare anonymized JSON-LD document to be revealed to verifier
       // by replacing hiddenURIs by anonymized IDs
-      let anonymizedRevealedDocument = anonymizer.anonymizeJsonld(
-        revealedDocument
-      );
+      const anonymizedRevealedDocument =
+        anonymizer.anonymizeJsonld(revealedDocument);
       revealedDocuments.push(anonymizedRevealedDocument);
 
       // getIndicies: calculate reveal indicies
@@ -314,16 +307,14 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       const anonymizedStatementsOriginal = documentStatements.map(
         (s: TermwiseStatement) => anonymizer.anonymizeStatement(s)
       );
-      const anonymizedStatementsToBeVerified = await this.createVerifyDocumentData(
-        anonymizedRevealedDocument,
-        {
+      const anonymizedStatementsToBeVerified =
+        await this.createVerifyDocumentData(anonymizedRevealedDocument, {
           suite,
           documentLoader,
           expansionMap,
           skipProofCompaction
-        }
-      );
-      let revealIndicies = this.getIndicies(
+        });
+      const revealIndicies = this.getIndicies(
         anonymizedStatementsOriginal,
         anonymizedStatementsToBeVerified,
         proofStatements
@@ -334,7 +325,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       terms.forEach((term, termIndex) => {
         if (equivs.has(term)) {
           if (revealIndicies.includes(termIndex)) {
-            let e = equivs.get(term) as [number, number][];
+            const e = equivs.get(term) as [number, number][];
             e.push([index, termIndex]);
           }
         }
@@ -368,7 +359,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
     // Compute the proof
     const outputProofs = await blsCreateProofMulti({
-      signature: signatureArray.map(signature => new Uint8Array(signature)),
+      signature: signatureArray.map((signature) => new Uint8Array(signature)),
       publicKey: issuerPublicKeyArray.map(
         (issuerPublicKey: Buffer) => new Uint8Array(issuerPublicKey)
       ),
@@ -456,7 +447,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
         // extract blinding indicies from anonIDs
         terms.forEach((term, termIndex) => {
-          let found = anonymizer.extractAnonID(term);
+          const found = anonymizer.extractAnonID(term);
           if (found !== null) {
             if (equivs.has(found)) {
               equivs.get(found)?.push([index, termIndex]);
@@ -486,7 +477,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       const equivsArray: [number, number][][] = [...equivs.entries()]
         .sort()
-        .map(e => e[1]);
+        .map((e) => e[1]);
 
       // Verify the proof
       const verified = await blsVerifyProofMulti({
@@ -510,7 +501,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       //   throw error;
       // }
       return verified;
-    } catch (error) {
+    } catch (error: any) {
       return { verified: false, error };
     }
   }

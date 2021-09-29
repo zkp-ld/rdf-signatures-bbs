@@ -17,7 +17,7 @@ export class BbsBlsSignatureTermwise2020 extends BbsBlsSignature2020 {
   getStatements(nQuads: string): TermwiseStatement[] {
     return nQuads
       .split("\n")
-      .filter(_ => _.length > 0)
+      .filter((_) => _.length > 0)
       .map((s: string) => new this.Statement(s));
   }
 

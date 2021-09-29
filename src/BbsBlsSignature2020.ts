@@ -13,7 +13,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
-import { suites, SECURITY_CONTEXT_URL } from "jsonld-signatures";
+import { suites } from "jsonld-signatures";
 import {
   SignatureSuiteOptions,
   CreateProofOptions,
@@ -27,6 +27,10 @@ import {
 import { w3cDate } from "./utilities";
 import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
 import { StringStatement } from "./StringStatement";
+
+const SECURITY_CONTEXT_URL = [
+  "https://w3id.org/security/suites/bls12381-2020/v1"
+];
 
 /**
  * A BBS+ signature suite for use with BLS12-381 key pairs
@@ -53,21 +57,11 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
       throw new TypeError('"verificationMethod" must be a URL string.');
     }
     super({
-      type: "sec:BbsBlsSignature2020"
+      type: "BbsBlsSignature2020"
     });
 
     this.proof = {
-      "@context": [
-        {
-          sec: "https://w3id.org/security#",
-          proof: {
-            "@id": "sec:proof",
-            "@type": "@id",
-            "@container": "@graph"
-          }
-        },
-        "https://w3id.org/security/bbs/v1"
-      ],
+      "@context": ["https://w3id.org/security/suites/bls12381-2020/v1"],
       type: "BbsBlsSignature2020"
     };
 
@@ -97,19 +91,33 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
     this.Statement = StringStatement;
   }
 
+  // ported from
+  // https://github.com/transmute-industries/verifiable-data/blob/main/packages/bbs-bls12381-signature-2020/src/BbsBlsSignature2020.ts
+  ensureSuiteContext({ document }: any): void {
+    const contextUrl = "https://w3id.org/security/suites/bls12381-2020/v1";
+    if (
+      document["@context"] === contextUrl ||
+      (Array.isArray(document["@context"]) &&
+        document["@context"].includes(contextUrl))
+    ) {
+      // document already includes the required context
+      return;
+    }
+    throw new TypeError(
+      `The document to be signed must contain this suite's @context, ` +
+        `"${contextUrl}".`
+    );
+  }
+
   /**
    * @param options {CreateProofOptions} options for creating the proof
    *
    * @returns {Promise<object>} Resolves with the created proof object.
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   async createProof(options: CreateProofOptions): Promise<object> {
-    const {
-      document,
-      purpose,
-      documentLoader,
-      expansionMap,
-      compactProof
-    } = options;
+    const { document, purpose, documentLoader, expansionMap, compactProof } =
+      options;
 
     let proof;
     if (this.proof) {
@@ -213,6 +221,7 @@ ${numberedSignedStatements.join("\n")}`);
    *
    * @returns {Promise<{object}>} Resolves with the verification result.
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   async verifyProof(options: VerifyProofOptions): Promise<object> {
     const { proof, document, documentLoader, expansionMap, purpose } = options;
 
@@ -330,7 +339,7 @@ ${numberedSignedStatements.join("\n")}`);
   getStatements(nQuads: string): Statement[] {
     return nQuads
       .split("\n")
-      .filter(_ => _.length > 0)
+      .filter((_) => _.length > 0)
       .map((s: string) => new this.Statement(s));
   }
 
@@ -419,6 +428,7 @@ ${numberedSignedStatements.join("\n")}`);
    *
    * @returns {Promise<{object}>} the proof containing the signature value.
    */
+  // eslint-disable-next-line @typescript-eslint/ban-types
   async sign(options: SuiteSignOptions): Promise<object> {
     const { verifyData, proof } = options;
 
