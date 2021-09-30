@@ -26,9 +26,12 @@ import {
   Bls12381G2KeyPair,
   BbsBlsSignatureProof2020,
   BbsBlsSignature2020,
-  deriveProof
+  deriveProof,
+  BbsBlsSignatureTermwise2020,
+  BbsBlsSignatureProofTermwise2020
 } from "../src/index";
 import { getProofs } from "../src/utilities";
+import { signDeriveVerifyMulti } from "./utils";
 
 const key = new Bls12381G2KeyPair(exampleBls12381KeyPair);
 
@@ -106,5 +109,44 @@ describe("anonymous verifiable credentials with blank node identifiers", () => {
       },
       college: "Contoso University"
     });
+  });
+
+  it("[Termwise] should sign, derive proof, and verify proof on anonymous verifiable credential", async () => {
+    const vc = { ...testAnonymousVcDocument };
+    const hiddenUris: any[] = [];
+
+    await signDeriveVerifyMulti(
+      [{ vc, revealDocument: testRevealAnonymousVcDocument, key }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+  });
+
+  it("[Termwise] should sign, derive proof, and verify proof on anonymous nested and partially revealed verifiable credential", async () => {
+    const vc = { ...testNestedAnonymousVcDocument };
+    const hiddenUris: any[] = [];
+
+    await signDeriveVerifyMulti(
+      [{ vc, revealDocument: testNestedRevealDocument, key }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+  });
+
+  it("[Termwise] should sign, derive proof, and verify proof on anonymous nested and fully revealed verifiable credential", async () => {
+    const vc = { ...testNestedAnonymousVcDocument };
+    const hiddenUris: any[] = [];
+
+    await signDeriveVerifyMulti(
+      [{ vc, revealDocument: testNestedRevealFullDocument, key }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
   });
 });

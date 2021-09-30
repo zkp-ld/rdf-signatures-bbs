@@ -1,21 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
-import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
-import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
+import { randomBytes } from "@stablelib/random";
 import {
   blsCreateProofMulti,
   blsVerifyProofMulti
 } from "@yamdan/bbs-signatures";
+
 import {
   Statement,
   CanonicalizeOptions,
   TermwiseCanonicalizeResult,
   DeriveProofMultiOptions,
   VerifyProofMultiOptions,
-  VerifyProofMultiResult
+  VerifyProofMultiResult,
+  TermwiseSkolemizeResult
 } from "./types";
+import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
+import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
 import { TermwiseStatement } from "./TermwiseStatement";
-import { randomBytes } from "@stablelib/random";
 
 const SECURITY_CONTEXT_URL = [
   "https://w3id.org/security/suites/bls12381-2020/v1"
@@ -112,6 +114,31 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   }
 
   /**
+   * Name all the blank nodes
+   *
+   * @param documentStatements to skolemize
+   *
+   * @returns {Promise<TermwiseSkolemizeResult>} skolemized JSON-LD document and statements
+   */
+  async skolemize(
+    documentStatements: TermwiseStatement[]
+  ): Promise<TermwiseSkolemizeResult> {
+    // Transform any blank node identifiers for the input
+    // document statements into actual node identifiers
+    // e.g., _:c14n0 => <urn:bnid:_:c14n0>
+    const skolemizedDocumentStatements = documentStatements.map((element) =>
+      element.skolemize()
+    );
+
+    // Transform the resulting RDF statements back into JSON-LD
+    const skolemizedDocument: string = await jsonld.fromRDF(
+      skolemizedDocumentStatements.join("\n")
+    );
+
+    return { skolemizedDocument, skolemizedDocumentStatements };
+  }
+
+  /**
    * Unname all the blank nodes
    *
    * @param documentStatements to deskolemize
@@ -157,12 +184,17 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     );
 
     //Reveal the statements indicated from the reveal document
-    const documentRevealIndicies = revealedDocumentStatements.map(
-      (key) =>
-        skolemizedDocumentStatements.findIndex(
-          (e) => e.toString() === key.toString()
-        ) + numberOfProofStatements
-    );
+    const documentRevealIndicies = revealedDocumentStatements.map((key) => {
+      const idx = skolemizedDocumentStatements.findIndex(
+        (e) => e.toString() === key.toString()
+      );
+      if (idx === -1) {
+        throw new Error(
+          "Some statements in the reveal document not found in original proof"
+        );
+      }
+      return idx + numberOfProofStatements;
+    });
 
     // Check there is not a mismatch
     if (documentRevealIndicies.length !== revealedDocumentStatements.length) {
@@ -282,7 +314,8 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // skolemize: name all the blank nodes
       // e.g., _:c14n0 -> urn:bnid:_:c14n0
-      const { skolemizedDocument } = await this.skolemize(documentStatements);
+      const { skolemizedDocument, skolemizedDocumentStatements } =
+        await this.skolemize(documentStatements);
 
       // reveal: extract revealed parts using JSON-LD Framing
       const { revealedDocument } = await this.reveal(
@@ -304,19 +337,21 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       // getIndicies: calculate reveal indicies
       //   compare anonymized statements and anonymized revealed statements
       //   to compute reveal indicies
-      const anonymizedStatementsOriginal = documentStatements.map(
+      const anonymizedStatements = skolemizedDocumentStatements.map(
         (s: TermwiseStatement) => anonymizer.anonymizeStatement(s)
       );
-      const anonymizedStatementsToBeVerified =
-        await this.createVerifyDocumentData(anonymizedRevealedDocument, {
+      const anonymizedRevealedStatements = await this.createVerifyDocumentData(
+        anonymizedRevealedDocument,
+        {
           suite,
           documentLoader,
           expansionMap,
           skipProofCompaction
-        });
+        }
+      );
       const revealIndicies = this.getIndicies(
-        anonymizedStatementsOriginal,
-        anonymizedStatementsToBeVerified,
+        anonymizedStatements,
+        anonymizedRevealedStatements,
         proofStatements
       );
       revealIndiciesArray.push(revealIndicies);

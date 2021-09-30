@@ -128,21 +128,27 @@ export class TermwiseStatement implements Statement {
     return this.toTerms().map((term) => new Uint8Array(Buffer.from(term)));
   }
 
-  skolemize(): Statement {
+  skolemize(): TermwiseStatement {
+    const _skolemize = (from: {
+      value: string;
+      termType: string;
+    }): { value: string; termType: string } => {
+      const to = { ...from };
+      if (from.termType === TYPE_BLANK_NODE) {
+        to.value = from.value.replace(/^(_:c14n[0-9]+)$/, "urn:bnid:$1");
+        if (to.value !== from.value) {
+          to.termType = TYPE_NAMED_NODE;
+        }
+      }
+      return to;
+    };
+
     // deep copy
     const out: Quad = JSON.parse(JSON.stringify(this.buffer));
-
-    const _skolemize = (x: string): string =>
-      x.replace(/(_:c14n[0-9]+)/, "<urn:bnid:$1>");
-
-    if (out.subject.termType === TYPE_BLANK_NODE) {
-      out.subject.value = _skolemize(out.subject.value);
-    }
-    if (out.object.termType === TYPE_BLANK_NODE) {
-      out.object.value = _skolemize(out.object.value);
-    }
-    if (out.graph?.termType === TYPE_BLANK_NODE) {
-      out.graph.value = _skolemize(out.graph.value);
+    out.subject = _skolemize(out.subject);
+    out.object = { ...out.object, ..._skolemize(out.object) };
+    if (out.graph) {
+      out.graph = _skolemize(out.graph);
     }
 
     return new TermwiseStatement(out);
@@ -154,20 +160,26 @@ export class TermwiseStatement implements Statement {
    * e.g., <urn:bnid:_:c14n0> => _:c14n0
    */
   deskolemize(): TermwiseStatement {
+    const _deskolemize = (from: {
+      value: string;
+      termType: string;
+    }): { value: string; termType: string } => {
+      const to = { ...from };
+      if (from.termType === TYPE_NAMED_NODE) {
+        to.value = from.value.replace(/^urn:bnid:(_:c14n[0-9]+)$/, "$1");
+        if (to.value !== from.value) {
+          to.termType = TYPE_BLANK_NODE;
+        }
+      }
+      return to;
+    };
+
     // deep copy
     const out: Quad = JSON.parse(JSON.stringify(this.buffer));
-
-    const _deskolemize = (y: string): string =>
-      y.replace(/<urn:bnid:(_:c14n[0-9]+)>/g, "$1");
-
-    if (out.subject.termType === TYPE_BLANK_NODE) {
-      out.subject.value = _deskolemize(out.subject.value);
-    }
-    if (out.object.termType === TYPE_BLANK_NODE) {
-      out.object.value = _deskolemize(out.object.value);
-    }
-    if (out.graph?.termType === TYPE_BLANK_NODE) {
-      out.graph.value = _deskolemize(out.graph.value);
+    out.subject = _deskolemize(out.subject);
+    out.object = { ...out.object, ..._deskolemize(out.object) };
+    if (out.graph) {
+      out.graph = _deskolemize(out.graph);
     }
 
     return new TermwiseStatement(out);

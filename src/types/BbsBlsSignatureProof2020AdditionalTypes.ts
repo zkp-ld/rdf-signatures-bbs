@@ -69,6 +69,17 @@ export interface SkolemizeResult {
   skolemizedDocumentStatements: Statement[];
 }
 
+export interface TermwiseSkolemizeResult {
+  /**
+   * Skolemized document (JSON-LD)
+   */
+  skolemizedDocument: string;
+  /**
+   * Skolemized document (array of quads)
+   */
+  skolemizedDocumentStatements: TermwiseStatement[];
+}
+
 export interface RevealOptions {
   /**
    * The signature suite
