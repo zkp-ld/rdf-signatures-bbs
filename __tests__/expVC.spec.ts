@@ -202,7 +202,11 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
 
   it("[TermwiseStatement] should verify verifiable presentation", async () => {
     const vc = { ...expVCDocument };
-    const hiddenUris = ["http://example.org/credentials/1234"];
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
 
     const derivedProofs = await signDeriveMultiJSigLike(
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
@@ -223,7 +227,11 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
 
   it("[TermwiseStatement] should not verify presentation whose type is edited", async () => {
     const vc = { ...expVCDocument };
-    const hiddenUris = ["http://example.org/credentials/1234"];
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
 
     const derivedProofs = await signDeriveMultiJSigLike(
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
@@ -234,7 +242,12 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     );
 
     let modifiedProofs = [...derivedProofs];
-    modifiedProofs[0] = { ...modifiedProofs[0], type: "PersonXXXXX" };
+    modifiedProofs[0].credentialSubject.type = "PersonXXX";
+
+    console.log(`
+# modified proofs (0):
+${JSON.stringify(modifiedProofs, null, 2)}`);
+
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsBlsSignatureProofTermwise2020(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -248,7 +261,11 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
 
   it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:0 --> urn:anon:999)", async () => {
     const vc = { ...expVCDocument };
-    const hiddenUris = ["http://example.org/credentials/1234"];
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
 
     const derivedProofs = await signDeriveMultiJSigLike(
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
@@ -259,7 +276,12 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     );
 
     let modifiedProofs = [...derivedProofs];
-    modifiedProofs[0] = { ...modifiedProofs[0], id: "urn:anon:999" };
+    modifiedProofs[0].id = "urn:anon:999";
+
+    console.log(`
+# modified proofs (0):
+${JSON.stringify(modifiedProofs, null, 2)}`);
+
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsBlsSignatureProofTermwise2020(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -271,9 +293,13 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement]  should not verify presentation whose verifiableCredential.id is edited (urn:anon:0 --> urn:anon:1)", async () => {
+  it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:1 --> urn:anon:999)", async () => {
     const vc = { ...expVCDocument };
-    const hiddenUris = ["http://example.org/credentials/1234"];
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
 
     const derivedProofs = await signDeriveMultiJSigLike(
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
@@ -284,7 +310,46 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     );
 
     let modifiedProofs = [...derivedProofs];
-    modifiedProofs[0] = { ...modifiedProofs[0], id: "urn:anon:1" };
+    modifiedProofs[0].credentialSubject.id = "urn:anon:999";
+
+    console.log(`
+# modified proofs (0):
+${JSON.stringify(modifiedProofs, null, 2)}`);
+
+    const result = await verifyProofMulti(modifiedProofs, {
+      suite: new BbsBlsSignatureProofTermwise2020(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+
+    console.log(result);
+    expect(result.verified).toBeFalsy();
+  });
+
+  it("[TermwiseStatement]  should not verify presentation whose verifiableCredential.id is edited (urn:anon:2 as object --> urn:anon:999)", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
+
+    const derivedProofs = await signDeriveMultiJSigLike(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+
+    let modifiedProofs = [...derivedProofs];
+    modifiedProofs[0].credentialSubject.homeLocation.id = "urn:anon:999";
+
+    console.log(`
+# modified proofs (0):
+${JSON.stringify(modifiedProofs, null, 2)}`);
+
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsBlsSignatureProofTermwise2020(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
