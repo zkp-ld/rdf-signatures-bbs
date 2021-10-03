@@ -1,3 +1,5 @@
+import jsigs from "jsonld-signatures";
+
 import {
   expExampleBls12381KeyPair,
   expExampleBls12381KeyPair2,
@@ -18,10 +20,12 @@ import {
   BbsBlsSignatureProof2020,
   BbsBlsSignatureProofTermwise2020,
   BbsBlsSignatureTermwise2020,
-  Bls12381G2KeyPair
+  Bls12381G2KeyPair,
+  verifyProofMulti
 } from "../src/index";
 
 import {
+  signDeriveMultiJSigLike,
   signDeriveVerify,
   signDeriveVerifyMulti,
   signDeriveVerifyMultiJSigLike
@@ -194,5 +198,101 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
       BbsBlsSignatureTermwise2020,
       BbsBlsSignatureProofTermwise2020
     );
+  });
+
+  it("[TermwiseStatement] should verify verifiable presentation", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = ["http://example.org/credentials/1234"];
+
+    const derivedProofs = await signDeriveMultiJSigLike(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+
+    const result = await verifyProofMulti(derivedProofs, {
+      suite: new BbsBlsSignatureProofTermwise2020(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+    expect(result.verified).toBeTruthy();
+  });
+
+  it("[TermwiseStatement] should not verify presentation whose type is edited", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = ["http://example.org/credentials/1234"];
+
+    const derivedProofs = await signDeriveMultiJSigLike(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+
+    let modifiedProofs = [...derivedProofs];
+    modifiedProofs[0] = { ...modifiedProofs[0], type: "PersonXXXXX" };
+    const result = await verifyProofMulti(modifiedProofs, {
+      suite: new BbsBlsSignatureProofTermwise2020(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+
+    console.log(result);
+    expect(result.verified).toBeFalsy();
+  });
+
+  it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:0 --> urn:anon:999)", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = ["http://example.org/credentials/1234"];
+
+    const derivedProofs = await signDeriveMultiJSigLike(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+
+    let modifiedProofs = [...derivedProofs];
+    modifiedProofs[0] = { ...modifiedProofs[0], id: "urn:anon:999" };
+    const result = await verifyProofMulti(modifiedProofs, {
+      suite: new BbsBlsSignatureProofTermwise2020(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+
+    console.log(result);
+    expect(result.verified).toBeFalsy();
+  });
+
+  it("[TermwiseStatement]  should not verify presentation whose verifiableCredential.id is edited (urn:anon:0 --> urn:anon:1)", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = ["http://example.org/credentials/1234"];
+
+    const derivedProofs = await signDeriveMultiJSigLike(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+
+    let modifiedProofs = [...derivedProofs];
+    modifiedProofs[0] = { ...modifiedProofs[0], id: "urn:anon:1" };
+    const result = await verifyProofMulti(modifiedProofs, {
+      suite: new BbsBlsSignatureProofTermwise2020(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+
+    console.log(result);
+    expect(result.verified).toBeFalsy();
   });
 });

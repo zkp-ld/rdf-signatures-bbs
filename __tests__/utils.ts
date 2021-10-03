@@ -172,6 +172,36 @@ export const signDeriveVerifyMultiJSigLike = async (
   signSuite: any,
   proofSuite: any
 ) => {
+  const derivedProofs = await signDeriveMultiJSigLike(
+    vcRevealKeys,
+    hiddenUris,
+    customLoader,
+    signSuite,
+    proofSuite
+  );
+
+  // Verifier verifies proof
+  const result = await verifyProofMulti(derivedProofs, {
+    suite: new proofSuite(),
+    purpose: new jsigs.purposes.AssertionProofPurpose(),
+    documentLoader: customLoader,
+    expansionMap: false
+  });
+
+  console.log(`
+# Verifier verifies Proof:
+${JSON.stringify(result, null, 2)}`);
+
+  expect(result.verified).toBeTruthy();
+};
+
+export const signDeriveMultiJSigLike = async (
+  vcRevealKeys: any[],
+  hiddenUris: string[],
+  customLoader: any,
+  signSuite: any,
+  proofSuite: any
+): Promise<any[]> => {
   // Issuers issues VCs
   const documents: [any, any][] = await Promise.all(
     vcRevealKeys.map(
@@ -222,17 +252,5 @@ ${JSON.stringify(documents[i][1], null, 2)}`);
 ${JSON.stringify(derivedProofs[i], null, 2)}`);
   }
 
-  // Verifier verifies proof
-  const result = await verifyProofMulti(derivedProofs, {
-    suite: new proofSuite(),
-    purpose: new jsigs.purposes.AssertionProofPurpose(),
-    documentLoader: customLoader,
-    expansionMap: false
-  });
-
-  console.log(`
-# Verifier verifies Proof:
-${JSON.stringify(result, null, 2)}`);
-
-  expect(result.verified).toBeTruthy();
+  return derivedProofs;
 };

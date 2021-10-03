@@ -218,6 +218,18 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     return revealIndicies;
   }
 
+  statementToUint8(statementArray: Statement[][]): Uint8Array {
+    return new Uint8Array(
+      Buffer.from(
+        statementArray
+          .map((statements) =>
+            statements.map((statement) => statement.toString()).join("")
+          )
+          .join("")
+      )
+    );
+  }
+
   /**
    * Derive a proof from multiple proofs and reveal documents
    *
@@ -249,6 +261,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const signatureArray: Buffer[] = [];
     const revealedDocuments: any = [];
     const derivedProofs: any = [];
+    const anonymizedRevealedStatementsArray: Statement[][] = [];
 
     const equivs: Map<string, [number, number][]> = new Map(
       hiddenUris.map((uri) => [`<${uri}>`, []])
@@ -354,6 +367,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         anonymizedRevealedStatements,
         proofStatements
       );
+      anonymizedRevealedStatementsArray.push(anonymizedRevealedStatements);
       revealIndiciesArray.push(revealIndicies);
 
       // calculate index of hidden URIs
@@ -392,6 +406,16 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
     const equivsArray: [number, number][][] = [...equivs.values()];
 
+    // merge revealed statements into nonce (should be separated as claims?)
+    const revealedStatementsByte = this.statementToUint8(
+      anonymizedRevealedStatementsArray
+    );
+    const mergedNonce = new Uint8Array(
+      nonce.length + revealedStatementsByte.length
+    );
+    mergedNonce.set(nonce);
+    mergedNonce.set(revealedStatementsByte, nonce.length);
+
     // Compute the proof
     const outputProofs = await blsCreateProofMulti({
       signature: signatureArray.map((signature) => new Uint8Array(signature)),
@@ -399,7 +423,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         (issuerPublicKey: Buffer) => new Uint8Array(issuerPublicKey)
       ),
       messages: termsArray,
-      nonce: nonce,
+      nonce: mergedNonce,
       revealed: revealIndiciesArray,
       equivs: equivsArray
     });
@@ -433,6 +457,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const proofArray: { value: Uint8Array }[] = [];
     const issuerPublicKeyArray: Uint8Array[] = [];
     const equivs: Map<string, [number, number][]> = new Map();
+    const skolemizedDocumentStatementsArray: Statement[][] = [];
 
     const anonymizer = new URIAnonymizer();
 
@@ -464,6 +489,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           documentLoader,
           expansionMap
         });
+        skolemizedDocumentStatementsArray.push(skolemizedDocumentStatements);
 
         // deskolemize: unname all the blank nodes
         // e.g., urn:bnid:_:c14n0 -> _:c14n0
@@ -514,12 +540,25 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         .sort()
         .map((e) => e[1]);
 
+      // merge document statements into nonce (should be separated as claims?)
+      const documentStatementsByte = this.statementToUint8(
+        skolemizedDocumentStatementsArray
+      );
+      const nonce = new Uint8Array(
+        Buffer.from(previous_nonce as string, "base64")
+      );
+      const mergedNonce = new Uint8Array(
+        nonce.length + documentStatementsByte.length
+      );
+      mergedNonce.set(nonce);
+      mergedNonce.set(documentStatementsByte, nonce.length);
+
       // Verify the proof
       const verified = await blsVerifyProofMulti({
         proof: proofArray,
         publicKey: issuerPublicKeyArray,
         messages: messagesArray,
-        nonce: new Uint8Array(Buffer.from(previous_nonce as string, "base64")),
+        nonce: mergedNonce,
         equivs: equivsArray
       });
 
