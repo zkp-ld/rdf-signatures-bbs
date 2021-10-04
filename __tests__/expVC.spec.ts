@@ -363,6 +363,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
 
   it("[TermwiseStatement] should not sign VC with invalid context", async () => {
     let vc = { ...expVCDocument };
+    vc["@context"] = [...vc["@context"]];
     vc["@context"].push("https://dummy.example.org/");
 
     const sign = () =>
