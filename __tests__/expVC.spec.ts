@@ -327,7 +327,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement]  should not verify presentation whose verifiableCredential.id is edited (urn:anon:2 as object --> urn:anon:999)", async () => {
+  it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:2 as object --> urn:anon:999)", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -345,6 +345,56 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
 
     let modifiedProofs = [...derivedProofs];
     modifiedProofs[0].credentialSubject.homeLocation.id = "urn:anon:999";
+
+    console.log(`
+# modified proofs (0):
+${JSON.stringify(modifiedProofs, null, 2)}`);
+
+    const result = await verifyProofMulti(modifiedProofs, {
+      suite: new BbsBlsSignatureProofTermwise2020(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+
+    console.log(result);
+    expect(result.verified).toBeFalsy();
+  });
+
+  it("[TermwiseStatement] should not sign VC with invalid context", async () => {
+    let vc = { ...expVCDocument };
+    vc["@context"].push("https://dummy.example.org/");
+
+    const sign = () =>
+      jsigs.sign(vc, {
+        suite: new BbsBlsSignatureTermwise2020({ key: expKey1 }),
+        purpose: new jsigs.purposes.AssertionProofPurpose(),
+        documentLoader: customLoader,
+        expansionMap: false
+      });
+    await expect(sign).rejects.toThrow();
+  });
+
+  it("[TermwiseStatement] should not be panicked due to Wasm error when modifying proofValue", async () => {
+    const vc = { ...expVCDocument };
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
+
+    const derivedProofs = await signDeriveMultiJSigLike(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
+      customLoader,
+      BbsBlsSignatureTermwise2020,
+      BbsBlsSignatureProofTermwise2020
+    );
+
+    // remove first byte from proofValue
+    let modifiedProofs = [...derivedProofs];
+    modifiedProofs[0].proof.proofValue =
+      modifiedProofs[0].proof.proofValue.slice(1);
 
     console.log(`
 # modified proofs (0):
