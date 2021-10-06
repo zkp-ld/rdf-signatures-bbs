@@ -128,14 +128,19 @@ export class TermwiseStatement implements Statement {
     return this.toTerms().map((term) => new Uint8Array(Buffer.from(term)));
   }
 
-  skolemize(): TermwiseStatement {
+  skolemize(auxilliaryIndex?: number): TermwiseStatement {
+    const index = auxilliaryIndex !== undefined ? `${auxilliaryIndex}` : "";
+
     const _skolemize = (from: {
       value: string;
       termType: string;
     }): { value: string; termType: string } => {
       const to = { ...from };
       if (from.termType === TYPE_BLANK_NODE) {
-        to.value = from.value.replace(/^(_:c14n[0-9]+)$/, "urn:bnid:$1");
+        to.value = from.value.replace(
+          /^(_:c14n[0-9]+)$/,
+          `urn:bnid:${index}:$1`
+        );
         if (to.value !== from.value) {
           to.termType = TYPE_NAMED_NODE;
         }

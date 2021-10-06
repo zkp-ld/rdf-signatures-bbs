@@ -200,7 +200,7 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     );
   });
 
-  it("[TermwiseStatement] should verify verifiable presentation", async () => {
+  it("[TermwiseStatement] should verify derived proofs", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -225,7 +225,7 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     expect(result.verified).toBeTruthy();
   });
 
-  it("[TermwiseStatement] should not verify presentation whose type is edited", async () => {
+  it("[TermwiseStatement] should not verify derived proofs where credentialSubject.type is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -259,7 +259,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:0 --> urn:anon:999)", async () => {
+  it("[TermwiseStatement] should not verify derived proofs where anonymized credential.id is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -293,7 +293,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:1 --> urn:anon:999)", async () => {
+  it("[TermwiseStatement] should not verify derived proofs where anonymized credentialSubject.id is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -327,7 +327,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not verify presentation whose verifiableCredential.id is edited (urn:anon:2 as object --> urn:anon:999)", async () => {
+  it("[TermwiseStatement] should not verify derived proofs where anonymized credentialSubject.*.id is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",

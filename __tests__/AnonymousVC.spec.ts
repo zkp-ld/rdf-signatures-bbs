@@ -113,7 +113,7 @@ describe("anonymous verifiable credentials with blank node identifiers", () => {
 
   it("[Termwise] should sign, derive proof, and verify proof on anonymous verifiable credential", async () => {
     const vc = { ...testAnonymousVcDocument };
-    const hiddenUris: any[] = [];
+    const hiddenUris: any[] = ["did:example:489398593"];
 
     await signDeriveVerifyMulti(
       [{ vc, revealDocument: testRevealAnonymousVcDocument, key }],
@@ -126,7 +126,7 @@ describe("anonymous verifiable credentials with blank node identifiers", () => {
 
   it("[Termwise] should sign, derive proof, and verify proof on anonymous nested and partially revealed verifiable credential", async () => {
     const vc = { ...testNestedAnonymousVcDocument };
-    const hiddenUris: any[] = [];
+    const hiddenUris: any[] = ["did:example:489398593"];
 
     await signDeriveVerifyMulti(
       [{ vc, revealDocument: testNestedRevealDocument, key }],
@@ -139,7 +139,7 @@ describe("anonymous verifiable credentials with blank node identifiers", () => {
 
   it("[Termwise] should sign, derive proof, and verify proof on anonymous nested and fully revealed verifiable credential", async () => {
     const vc = { ...testNestedAnonymousVcDocument };
-    const hiddenUris: any[] = [];
+    const hiddenUris: any[] = ["did:example:489398593"];
 
     await signDeriveVerifyMulti(
       [{ vc, revealDocument: testNestedRevealFullDocument, key }],

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
 import { randomBytes } from "@stablelib/random";
+import { v4 as uuidv4 } from "uuid";
 import {
   blsCreateProofMulti,
   blsVerifyProofMulti
@@ -25,15 +26,15 @@ const SECURITY_CONTEXT_URL = [
 
 class URIAnonymizer {
   private prefix = "urn:anon:";
-  private regexp = /^<urn:anon:([0-9]+)>/;
+  private regexp = /^<urn:anon:([^>]+)>/;
 
-  private targets: string[] = [];
+  private equivs: Map<string, [string, [number, number][]]> = new Map();
 
   constructor();
-  constructor(targets: string[]);
-  constructor(targets?: string[]) {
-    if (targets) {
-      this.targets = targets;
+  constructor(equivs: Map<string, [string, [number, number][]]>);
+  constructor(equivs?: Map<string, [string, [number, number][]]>) {
+    if (equivs) {
+      this.equivs = equivs;
     }
   }
 
@@ -43,9 +44,9 @@ class URIAnonymizer {
         if (typeof v === "object") {
           anonymizeDocument(v);
         } else if (typeof v === "string") {
-          const iid = this.targets.indexOf(v);
-          if (iid != -1) {
-            doc[k] = `${this.prefix}${iid}`;
+          const anid = this.equivs.get(`<${v}>`);
+          if (anid !== undefined) {
+            doc[k] = `${this.prefix}${anid[0]}`;
           }
         }
       }
@@ -57,9 +58,9 @@ class URIAnonymizer {
   }
 
   anonymizeStatement(s: Statement): Statement {
-    this.targets.forEach((uri, i) => {
-      s = s.replace(uri, `${this.prefix}${i}`);
-    });
+    for (const [uri, value] of this.equivs) {
+      s = s.replace(uri.slice(1, -1), `${this.prefix}${value[0]}`);
+    }
     return s;
   }
 
@@ -121,13 +122,14 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
    * @returns {Promise<TermwiseSkolemizeResult>} skolemized JSON-LD document and statements
    */
   async skolemize(
-    documentStatements: TermwiseStatement[]
+    documentStatements: TermwiseStatement[],
+    auxilliaryIndex?: number
   ): Promise<TermwiseSkolemizeResult> {
     // Transform any blank node identifiers for the input
     // document statements into actual node identifiers
     // e.g., _:c14n0 => <urn:bnid:_:c14n0>
     const skolemizedDocumentStatements = documentStatements.map((element) =>
-      element.skolemize()
+      element.skolemize(auxilliaryIndex)
     );
 
     // Transform the resulting RDF statements back into JSON-LD
@@ -248,8 +250,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     } = options;
     let { nonce } = options;
 
-    const anonymizer = new URIAnonymizer(hiddenUris);
-
     // Create a nonce if one is not supplied
     if (!nonce) {
       nonce = await randomBytes(50);
@@ -263,9 +263,11 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const derivedProofs: any = [];
     const anonymizedRevealedStatementsArray: Statement[][] = [];
 
-    const equivs: Map<string, [number, number][]> = new Map(
-      hiddenUris.map((uri) => [`<${uri}>`, []])
+    const equivs: Map<string, [string, [number, number][]]> = new Map(
+      hiddenUris.map((uri) => [`<${uri}>`, [uuidv4(), []]])
     );
+
+    const anonymizer = new URIAnonymizer(equivs);
 
     let index = 0;
     for (const { document, proof, revealDocument } of inputDocuments) {
@@ -326,9 +328,21 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       );
 
       // skolemize: name all the blank nodes
-      // e.g., _:c14n0 -> urn:bnid:_:c14n0
+      // e.g., _:c14n0 -> urn:bnid:0:_:c14n0
       const { skolemizedDocument, skolemizedDocumentStatements } =
-        await this.skolemize(documentStatements);
+        await this.skolemize(documentStatements, index);
+
+      // add blank node identifiers to equivs array
+      const skolemizedTerms = proofStatements
+        .concat(skolemizedDocumentStatements)
+        .flatMap((item: TermwiseStatement) => item.toTerms());
+      new Set(
+        skolemizedTerms.filter((term) =>
+          term.match(/^<urn:bnid:[0-9]+:_:c14n[0-9]+>$/)
+        )
+      ).forEach((skolemizedBnid) => {
+        equivs.set(skolemizedBnid, [uuidv4(), []]);
+      });
 
       // reveal: extract revealed parts using JSON-LD Framing
       const { revealedDocument } = await this.reveal(
@@ -370,13 +384,11 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       anonymizedRevealedStatementsArray.push(anonymizedRevealedStatements);
       revealIndiciesArray.push(revealIndicies);
 
-      // calculate index of hidden URIs
-      terms.forEach((term, termIndex) => {
-        if (equivs.has(term)) {
-          if (revealIndicies.includes(termIndex)) {
-            const e = equivs.get(term) as [number, number][];
-            e.push([index, termIndex]);
-          }
+      // add term indicies of hidden URIs to equivs array
+      skolemizedTerms.forEach((term, termIndex) => {
+        if (equivs.has(term) && revealIndicies.includes(termIndex)) {
+          const e = equivs.get(term) as [string, [number, number][]];
+          e[1].push([index, termIndex]);
         }
       });
 
@@ -404,7 +416,9 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       index++;
     }
 
-    const equivsArray: [number, number][][] = [...equivs.values()];
+    const equivsArray: [number, number][][] = [...equivs.values()].map(
+      (v) => v[1]
+    );
 
     // merge revealed statements into nonce (should be separated as claims?)
     const revealedStatementsByte = this.statementToUint8(
@@ -457,7 +471,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     const proofArray: { value: Uint8Array }[] = [];
     const issuerPublicKeyArray: Uint8Array[] = [];
     const equivs: Map<string, [number, number][]> = new Map();
-    const skolemizedDocumentStatementsArray: Statement[][] = [];
+    const documentStatementsArray: Statement[][] = [];
 
     const anonymizer = new URIAnonymizer();
 
@@ -481,21 +495,16 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         proof.type = this.mappedDerivedProofType;
 
         // canonicalize: get N-Quads from JSON-LD
-        const {
-          documentStatements: skolemizedDocumentStatements,
-          proofStatements
-        } = await this.canonicalize(document, proof, {
-          suite: this,
-          documentLoader,
-          expansionMap
-        });
-        skolemizedDocumentStatementsArray.push(skolemizedDocumentStatements);
-
-        // deskolemize: unname all the blank nodes
-        // e.g., urn:bnid:_:c14n0 -> _:c14n0
-        const documentStatements = await this.deskolemize(
-          skolemizedDocumentStatements
+        const { documentStatements, proofStatements } = await this.canonicalize(
+          document,
+          proof,
+          {
+            suite: this,
+            documentLoader,
+            expansionMap
+          }
         );
+        documentStatementsArray.push(documentStatements);
 
         // concat proof and document to be verified
         const terms = proofStatements
@@ -542,7 +551,7 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
 
       // merge document statements into nonce (should be separated as claims?)
       const documentStatementsByte = this.statementToUint8(
-        skolemizedDocumentStatementsArray
+        documentStatementsArray
       );
       const nonce = new Uint8Array(
         Buffer.from(previous_nonce as string, "base64")
