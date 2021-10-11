@@ -535,6 +535,18 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
           expansionMap
         });
 
+        // Ensure proof was performed for a valid purpose
+        const { valid, error } = await purpose.validate(proof, {
+          document,
+          suite: this,
+          verificationMethod,
+          documentLoader,
+          expansionMap
+        });
+        if (!valid) {
+          throw error;
+        }
+
         // Construct a key pair class from the returned verification method
         const key = verificationMethod.publicKeyJwk
           ? await this.LDKeyClass.fromJwk(verificationMethod)
@@ -571,18 +583,6 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
         equivs: equivsArray
       });
 
-      // TODO: redefine validation process
-      // // Ensure proof was performed for a valid purpose
-      // const { valid, error } = await purpose.validate(proof, {
-      //   document,
-      //   suite: this,
-      //   verificationMethod,
-      //   documentLoader,
-      //   expansionMap
-      // });
-      // if (!valid) {
-      //   throw error;
-      // }
       return verified;
     } catch (error: any) {
       return { verified: false, error };
