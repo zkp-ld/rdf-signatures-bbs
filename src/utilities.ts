@@ -12,7 +12,7 @@ import jsonld from "jsonld";
 import { GetProofsOptions, GetProofsResult, GetTypeOptions } from "./types";
 
 const SECURITY_CONTEXT_URL = [
-  "https://w3id.org/security/suites/bls12381-2020/v1"
+  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
 ];
 
 /**

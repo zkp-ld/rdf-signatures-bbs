@@ -19,7 +19,7 @@ import {
 } from "./__fixtures__";
 
 import { getProofs } from "../src/utilities";
-import { BbsBlsSignature2020 } from "../src";
+import { BbsTermwiseSignature2021 } from "../src";
 
 describe("getProofs", () => {
   it("should get all proofs from document", async () => {
@@ -36,7 +36,7 @@ describe("getProofs", () => {
   it("should get proofs from document filtered by type", async () => {
     const result = await getProofs({
       document: testSignedDocumentMultiDifProofs,
-      proofType: BbsBlsSignature2020.proofType,
+      proofType: BbsTermwiseSignature2021.proofType,
       documentLoader: customLoader
     });
     expect(result).toBeDefined();
@@ -59,8 +59,7 @@ describe("getProofs", () => {
   it("should return empty proof array when no proofs found for type", async () => {
     const result = await getProofs({
       document: testSignedDocumentEd25519,
-      proofType:
-        "https://w3c-ccg.github.io/ldp-bbs2020/context/v1#BbsBlsSignature2020",
+      proofType: BbsTermwiseSignature2021.proofType,
       documentLoader: customLoader
     });
     expect(result).toBeDefined();

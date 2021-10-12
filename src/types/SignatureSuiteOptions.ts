@@ -48,4 +48,6 @@ export interface SignatureSuiteOptions {
    * Linked Data Key class implementation
    */
   readonly LDKeyClass?: any;
+
+  readonly type?: any;
 }

@@ -1,20 +1,19 @@
 {
   "@context": [
-    {
-      "schema": "http://schema.org/",
-      "name": "schema:name",
-      "homepage": "schema:url",
-      "image": "schema:image"
-    },
-    "https://w3id.org/security/suites/bls12381-2020/v1"
+    "https://schema.org",
+    "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
   ],
-  "name": "John Doe",
-  "homepage": "https://domain.com/profile",
+  "@type": "Person",
+  "firstName": "Jane",
+  "lastName": "Does",
+  "jobTitle": "Professor",
+  "telephone": "(425) 123-4567",
+  "email": "jane.doe@example.com",
   "proof": {
-    "type": "BbsBlsSignature2020",
-    "created": "2020-04-18T02:41:11Z",
+    "type": "BbsTermwiseSignature2021",
+    "created": "2021-10-11T20:49:28Z",
     "verificationMethod": "did:example:489398593#test",
     "proofPurpose": "assertionMethod",
-    "signature": "cBJG+AYOEuLd3MwsOC1xyPRcmspso687W24zSvduShKbL0xCJk7f0rrEpKkBpYPHThU3f3gP0d4amCQ9QLkGT5Z9mw2r2MakfdliAhnVt/CvV1IEEyouFAqzCiEyfxhU1wAAAAAAAAAAAAAAAAAAAABT3s/8eZfUJrJNLFxMiMnIhYWQvkqA80eRpwTZKWjRUwAAAAAAAAAAAAAAAAAAAAADp+HUtElIe+t1Pb0tiqrodTEb+pU4i9tDihJBY0xODA=="
+    "proofValue": "badpzC7wNn5YO2aK6QiVjjKr3FrwYFH/FQxl917P8GgaoFSAUgHUuKOdJImSYTgCdb9YUHlKfzccE4m7waZyoLEkBLFiK2g54Q2i+CdtYBgDdkUDsoULSBMcH1MwGHwdjfXpldFNFrHFx/IAvLVniyeMQ=="
   }
 }

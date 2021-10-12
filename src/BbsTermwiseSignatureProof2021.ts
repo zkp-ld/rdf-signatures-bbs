@@ -1,27 +1,36 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
+import { suites } from "jsonld-signatures";
 import { randomBytes } from "@stablelib/random";
 import { v4 as uuidv4 } from "uuid";
 import {
   blsCreateProofMulti,
   blsVerifyProofMulti
 } from "@yamdan/bbs-signatures";
+import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
 
 import {
-  Statement,
+  DidDocumentPublicKey,
+  CreateVerifyDataOptions,
+  CanonizeOptions,
   CanonicalizeOptions,
+  RevealOptions,
+  RevealResult,
+  Statement,
   TermwiseCanonicalizeResult,
   DeriveProofMultiOptions,
   VerifyProofMultiOptions,
   VerifyProofMultiResult,
-  TermwiseSkolemizeResult
+  TermwiseSkolemizeResult,
+  DeriveProofOptions,
+  VerifyProofOptions,
+  VerifyProofResult
 } from "./types";
-import { BbsBlsSignatureProof2020 } from "./BbsBlsSignatureProof2020";
-import { BbsBlsSignatureTermwise2020 } from "./BbsBlsSignatureTermwise2020";
+import { BbsTermwiseSignature2021 } from "./BbsTermwiseSignature2021";
 import { TermwiseStatement } from "./TermwiseStatement";
 
 const SECURITY_CONTEXT_URL = [
-  "https://w3id.org/security/suites/bls12381-2020/v1"
+  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
 ];
 
 class URIAnonymizer {
@@ -71,11 +80,191 @@ class URIAnonymizer {
   }
 }
 
-export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
-  constructor(options: any = {}) {
-    super(options);
-    this.Suite = BbsBlsSignatureTermwise2020;
+export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
+  constructor({ useNativeCanonize, key, LDKeyClass, type }: any = {}) {
+    super({
+      type: "BbsTermwiseSignatureProof2021"
+    });
+
+    this.proof = {
+      "@context": ["https://www.zkp-ld.org/bbs-termwise-2021.jsonld"],
+      type: "BbsTermwiseSignatureProof2021"
+    };
+
+    this.mappedDerivedProofType = "BbsTermwiseSignature2021";
+    this.supportedDeriveProofType =
+      BbsTermwiseSignatureProof2021.supportedDerivedProofType;
+    this.LDKeyClass = LDKeyClass ?? Bls12381G2KeyPair;
+    this.proofSignatureKey = "proofValue";
+    this.key = key;
+    this.useNativeCanonize = useNativeCanonize;
+    this.Suite = BbsTermwiseSignature2021;
     this.Statement = TermwiseStatement;
+  }
+
+  // ported from
+  // https://github.com/transmute-industries/verifiable-data/blob/main/packages/bbs-bls12381-signature-2020/src/BbsBlsSignatureProof2020.ts
+  ensureSuiteContext({ document }: any): void {
+    const contextUrl = "https://www.zkp-ld.org/bbs-termwise-2021.jsonld";
+    if (
+      document["@context"] === contextUrl ||
+      (Array.isArray(document["@context"]) &&
+        document["@context"].includes(contextUrl))
+    ) {
+      // document already includes the required context
+      return;
+    }
+    throw new TypeError(
+      `The document to be signed must contain this suite's @context, ` +
+        `"${contextUrl}".`
+    );
+  }
+
+  async canonize(input: any, options: CanonizeOptions): Promise<string> {
+    const { documentLoader, expansionMap, skipExpansion } = options;
+    return jsonld.canonize(input, {
+      algorithm: "URDNA2015",
+      format: "application/n-quads",
+      documentLoader,
+      expansionMap,
+      skipExpansion,
+      useNative: this.useNativeCanonize
+    });
+  }
+
+  async canonizeProof(proof: any, options: CanonizeOptions): Promise<string> {
+    const { documentLoader, expansionMap } = options;
+    proof = { ...proof };
+
+    delete proof.nonce;
+    delete proof.proofValue;
+
+    return this.canonize(proof, {
+      documentLoader,
+      expansionMap,
+      skipExpansion: false
+    });
+  }
+
+  /**
+   * @param document {CreateVerifyDataOptions} options to create verify data
+   *
+   * @returns {Promise<Statement[]>}.
+   */
+  async createVerifyData(
+    options: CreateVerifyDataOptions
+  ): Promise<Statement[]> {
+    const { proof, document, documentLoader, expansionMap } = options;
+
+    const proofStatements = await this.createVerifyProofData(proof, {
+      documentLoader,
+      expansionMap
+    });
+    const documentStatements = await this.createVerifyDocumentData(document, {
+      documentLoader,
+      expansionMap
+    });
+
+    // concatenate c14n proof options and c14n document
+    return proofStatements.concat(documentStatements);
+  }
+
+  /**
+   * @param nQuads {string} canonized RDF N-Quads as a string
+   *
+   * @returns {Statement[]} an array of statements
+   */
+  getStatements(nQuads: string): Statement[] {
+    return nQuads
+      .split("\n")
+      .filter((_) => _.length > 0)
+      .map((s: string) => new this.Statement(s));
+  }
+
+  /**
+   * @param proof to canonicalize
+   * @param options to create verify data
+   *
+   * @returns {Promise<Statement[]>}.
+   */
+  async createVerifyProofData(
+    proof: any,
+    { documentLoader, expansionMap }: any
+  ): Promise<Statement[]> {
+    const c14nProofOptions = await this.canonizeProof(proof, {
+      documentLoader,
+      expansionMap
+    });
+
+    return this.getStatements(c14nProofOptions);
+  }
+
+  /**
+   * @param document to canonicalize
+   * @param options to create verify data
+   *
+   * @returns {Promise<Statement[]>}.
+   */
+  async createVerifyDocumentData(
+    document: any,
+    { documentLoader, expansionMap }: any
+  ): Promise<Statement[]> {
+    const c14nDocument = await this.canonize(document, {
+      documentLoader,
+      expansionMap
+    });
+
+    return this.getStatements(c14nDocument);
+  }
+
+  /**
+   * @param document {object} to be signed.
+   * @param proof {object}
+   * @param documentLoader {function}
+   * @param expansionMap {function}
+   */
+  async getVerificationMethod({
+    proof,
+    documentLoader
+  }: any): Promise<DidDocumentPublicKey> {
+    let { verificationMethod } = proof;
+
+    if (typeof verificationMethod === "object") {
+      verificationMethod = verificationMethod.id;
+    }
+    if (!verificationMethod) {
+      throw new Error('No "verificationMethod" found in proof.');
+    }
+
+    // Note: `expansionMap` is intentionally not passed; we can safely drop
+    // properties here and must allow for it
+    const result = await jsonld.frame(
+      verificationMethod,
+      {
+        // adding jws-2020 context to allow publicKeyJwk
+        "@context": [
+          "https://w3id.org/security/v2",
+          "https://w3id.org/security/suites/jws-2020/v1"
+        ],
+        "@embed": "@always",
+        id: verificationMethod
+      },
+      {
+        documentLoader,
+        compactToRelative: false,
+        expandContext: SECURITY_CONTEXT_URL
+      }
+    );
+    if (!result) {
+      throw new Error(`Verification method ${verificationMethod} not found.`);
+    }
+
+    // ensure verification method has not been revoked
+    if (result.revoked !== undefined) {
+      throw new Error("The verification method has been revoked.");
+    }
+
+    return result;
   }
 
   /**
@@ -160,6 +349,41 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   }
 
   /**
+   * Extract revealed parts using JSON-LD Framing
+   *
+   * @param skolemizedDocument JSON-LD document
+   * @param revealDocument JSON-LD frame
+   * @param options for framing and createVerifyData
+   *
+   * @returns {Promise<RevealResult>} revealed JSON-LD document and statements
+   */
+  async reveal(
+    skolemizedDocument: string,
+    revealDocument: string,
+    options: RevealOptions
+  ): Promise<RevealResult> {
+    const { suite, documentLoader, expansionMap } = options;
+
+    // Frame the result to create the reveal document result
+    const revealedDocument = await jsonld.frame(
+      skolemizedDocument,
+      revealDocument,
+      { documentLoader }
+    );
+
+    // Canonicalize the resulting reveal document
+    const revealedDocumentStatements = await suite.createVerifyDocumentData(
+      revealedDocument,
+      {
+        documentLoader,
+        expansionMap
+      }
+    );
+
+    return { revealedDocument, revealedDocumentStatements };
+  }
+
+  /**
    * Calculate reveal indicies
    *
    * @param skolemizedDocumentStatements full document statements
@@ -233,20 +457,58 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
   }
 
   /**
-   * Derive a proof from multiple proofs and reveal documents
+   * Derive a proof from a proof and reveal document
    *
    * @param options {object} options for deriving a proof.
    *
    * @returns {Promise<object>} Resolves with the derived proof object.
    */
   // eslint-disable-next-line @typescript-eslint/ban-types
-  async deriveProofMulti(options: DeriveProofMultiOptions): Promise<object> {
+  async deriveProof(options: DeriveProofOptions): Promise<object> {
+    const {
+      document,
+      proof,
+      revealDocument,
+      documentLoader,
+      expansionMap,
+      skipProofCompaction,
+      nonce,
+      hiddenUris
+    } = options;
+
+    const derivedProofs = await this.deriveProofMulti({
+      inputDocuments: [
+        {
+          document,
+          proof,
+          revealDocument
+        }
+      ],
+      documentLoader,
+      expansionMap,
+      skipProofCompaction,
+      nonce,
+      hiddenUris
+    });
+
+    return derivedProofs[0];
+  }
+
+  /**
+   * Derive proofs from multiple proofs and reveal documents
+   *
+   * @param options {object} options for deriving proofs.
+   *
+   * @returns {Promise<object[]>} Resolves with the array of derived proofs object.
+   */
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  async deriveProofMulti(options: DeriveProofMultiOptions): Promise<object[]> {
     const {
       inputDocuments,
       documentLoader,
       expansionMap,
       skipProofCompaction,
-      hiddenUris
+      hiddenUris = []
     } = options;
     let { nonce } = options;
 
@@ -273,11 +535,13 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
     for (const { document, proof, revealDocument } of inputDocuments) {
       // Validate that the input proof document has a proof compatible with this suite
       if (
-        !BbsBlsSignatureProof2020.supportedDerivedProofType.includes(proof.type)
+        !BbsTermwiseSignatureProof2021.supportedDerivedProofType.includes(
+          proof.type
+        )
       ) {
         throw new TypeError(
           `proof document proof incompatible, expected proof types of ${JSON.stringify(
-            BbsBlsSignatureProof2020.supportedDerivedProofType
+            BbsTermwiseSignatureProof2021.supportedDerivedProofType
           )} received ${proof.type}`
         );
       }
@@ -462,6 +726,33 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
    *
    * @returns {Promise<{object}>} Resolves with the verification result.
    */
+  async verifyProof(options: VerifyProofOptions): Promise<VerifyProofResult> {
+    const { document, documentLoader, expansionMap, purpose, proof } = options;
+
+    const result = await this.verifyProofMulti({
+      inputDocuments: [
+        {
+          document,
+          proof
+        }
+      ],
+      documentLoader,
+      expansionMap,
+      purpose
+    });
+
+    if (result.results) {
+      return result.results[0];
+    } else {
+      return { verified: result.verified, error: result.error };
+    }
+  }
+
+  /**
+   * @param options {object} options for verifying the proof.
+   *
+   * @returns {Promise<{object}>} Resolves with the verification result.
+   */
   async verifyProofMulti(
     options: VerifyProofMultiOptions
   ): Promise<VerifyProofMultiResult> {
@@ -588,4 +879,14 @@ export class BbsBlsSignatureProofTermwise2020 extends BbsBlsSignatureProof2020 {
       return { verified: false, error };
     }
   }
+
+  static proofType = [
+    "BbsTermwiseSignatureProof2021",
+    "https://www.zkp-ld.org/security#BbsTermwiseSignatureProof2021"
+  ];
+
+  static supportedDerivedProofType = [
+    "BbsTermwiseSignature2021",
+    "https://www.zkp-ld.org/security#BbsTermwiseSignature2021"
+  ];
 }

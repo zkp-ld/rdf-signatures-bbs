@@ -1,19 +1,8 @@
-/*
- * Copyright 2020 - MATTR Limited
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
 import { suites } from "jsonld-signatures";
+import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
+
 import {
   SignatureSuiteOptions,
   CreateProofOptions,
@@ -25,17 +14,13 @@ import {
   Statement
 } from "./types";
 import { w3cDate } from "./utilities";
-import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
-import { StringStatement } from "./StringStatement";
+import { TermwiseStatement } from "./TermwiseStatement";
 
 const SECURITY_CONTEXT_URL = [
-  "https://w3id.org/security/suites/bls12381-2020/v1"
+  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
 ];
 
-/**
- * A BBS+ signature suite for use with BLS12-381 key pairs
- */
-export class BbsBlsSignature2020 extends suites.LinkedDataProof {
+export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
   /**
    * Default constructor
    * @param options {SignatureSuiteOptions} options for constructing the signature suite
@@ -57,12 +42,12 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
       throw new TypeError('"verificationMethod" must be a URL string.');
     }
     super({
-      type: "BbsBlsSignature2020"
+      type: "BbsTermwiseSignature2021"
     });
 
     this.proof = {
-      "@context": ["https://w3id.org/security/suites/bls12381-2020/v1"],
-      type: "BbsBlsSignature2020"
+      "@context": ["https://www.zkp-ld.org/bbs-termwise-2021.jsonld"],
+      type: "BbsTermwiseSignature2021"
     };
 
     this.LDKeyClass = LDKeyClass ?? Bls12381G2KeyPair;
@@ -88,13 +73,13 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
       }
     }
     this.useNativeCanonize = useNativeCanonize;
-    this.Statement = StringStatement;
+    this.Statement = TermwiseStatement;
   }
 
   // ported from
   // https://github.com/transmute-industries/verifiable-data/blob/main/packages/bbs-bls12381-signature-2020/src/BbsBlsSignature2020.ts
   ensureSuiteContext({ document }: any): void {
-    const contextUrl = "https://w3id.org/security/suites/bls12381-2020/v1";
+    const contextUrl = "https://www.zkp-ld.org/bbs-termwise-2021.jsonld";
     if (
       document["@context"] === contextUrl ||
       (Array.isArray(document["@context"]) &&
@@ -176,15 +161,6 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
       })
     ).flatMap((item: Statement) => item.serialize());
 
-    // FOR DEBUG: output console.log
-    // await this.logSignedStatements({
-    //   document,
-    //   proof,
-    //   documentLoader,
-    //   expansionMap,
-    //   compactProof
-    // });
-
     // sign data
     proof = await this.sign({
       verifyData,
@@ -195,25 +171,6 @@ export class BbsBlsSignature2020 extends suites.LinkedDataProof {
     });
 
     return proof;
-  }
-
-  /**
-   * @param options {CreateVerifyDataOptions} options to create verify data
-   *
-   * @returns {void} output signed statements to console log
-   */
-  private async logSignedStatements(
-    options: CreateVerifyDataOptions
-  ): Promise<void> {
-    const signedStatements: Statement[] = await this.createVerifyData(options);
-
-    const numberedSignedStatements: string[] = signedStatements.map(
-      (statements, i) => `# ${i}\n${statements}`
-    );
-
-    console.log(`
-# statements to be signed/verified
-${numberedSignedStatements.join("\n")}`);
   }
 
   /**
@@ -236,15 +193,6 @@ ${numberedSignedStatements.join("\n")}`);
           compactProof: false
         })
       ).flatMap((item: Statement) => item.serialize());
-
-      // FOR DEBUG: output console.log
-      // await this.logSignedStatements({
-      //   document,
-      //   proof,
-      //   documentLoader,
-      //   expansionMap,
-      //   compactProof: false
-      // });
 
       // fetch verification method
       const verificationMethod = await this.getVerificationMethod({
@@ -334,9 +282,9 @@ ${numberedSignedStatements.join("\n")}`);
   /**
    * @param nQuads {string} canonized RDF N-Quads as a string
    *
-   * @returns {Statement[]} an array of statements
+   * @returns {TermwiseStatement[]} an array of statements
    */
-  getStatements(nQuads: string): Statement[] {
+  getStatements(nQuads: string): TermwiseStatement[] {
     return nQuads
       .split("\n")
       .filter((_) => _.length > 0)
@@ -347,12 +295,12 @@ ${numberedSignedStatements.join("\n")}`);
    * @param proof to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<Statement[]>}.
+   * @returns {Promise<TermwiseStatement[]>}.
    */
   async createVerifyProofData(
     proof: any,
     { documentLoader, expansionMap }: any
-  ): Promise<Statement[]> {
+  ): Promise<TermwiseStatement[]> {
     const c14nProofOptions = await this.canonizeProof(proof, {
       documentLoader,
       expansionMap
@@ -365,12 +313,12 @@ ${numberedSignedStatements.join("\n")}`);
    * @param document to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<Statement[]>}.
+   * @returns {Promise<TermwiseStatement[]>}.
    */
   async createVerifyDocumentData(
     document: any,
     { documentLoader, expansionMap }: any
-  ): Promise<Statement[]> {
+  ): Promise<TermwiseStatement[]> {
     const c14nDocument = await this.canonize(document, {
       documentLoader,
       expansionMap
@@ -470,8 +418,7 @@ ${numberedSignedStatements.join("\n")}`);
   }
 
   static proofType = [
-    "BbsBlsSignature2020",
-    "sec:BbsBlsSignature2020",
-    "https://w3id.org/security#BbsBlsSignature2020"
+    "BbsTermwiseSignature2021",
+    "https://www.zkp-ld.org/security#BbsTermwiseSignature2021"
   ];
 }

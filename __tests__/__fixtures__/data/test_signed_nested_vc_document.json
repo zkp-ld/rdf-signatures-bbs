@@ -2,7 +2,7 @@
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
     "https://www.w3.org/2018/credentials/examples/v1",
-    "https://w3id.org/security/suites/bls12381-2020/v1"
+    "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
   ],
   "id": "https://example.gov/credentials/3732",
   "type": ["VerifiableCredential", "UniversityDegreeCredential"],
@@ -18,10 +18,10 @@
     "college": "Contoso University"
   },
   "proof": {
-    "type": "BbsBlsSignature2020",
-    "created": "2021-04-26T17:55:05Z",
+    "type": "BbsTermwiseSignature2021",
+    "created": "2021-10-12T12:44:56Z",
+    "verificationMethod": "did:example:489398593#test",
     "proofPurpose": "assertionMethod",
-    "proofValue": "t63mgQTFa5eMU0iIpCKtqyuJxC0S7nRE7fJ1g+/YhGnQqTZjAVzdB6mz+B/rEbJFRjoLnV8aJoyX0SXKEZQCZDinxaWksRnSqsDIGz/MVn4ovSqC5zGcApcCidsEO4S77RANaXba6hRHWrjhJGoMPg==",
-    "verificationMethod": "did:example:489398593#test"
+    "proofValue": "gq4ZGKpaqyvkPDsnIPQUDN8PKMavuwgtM+MrQTieFTTTS7IPQdXEPt7zz0T36O50NinIRPchVNZKAljZWdQeU63nrXoYqvKgjR/XBNbKjAMWkHkCmRHKmmKnywsMKjjSYInCrPxrBHfqIHbc+uSscw=="
   }
 }

@@ -1,16 +1,3 @@
-/*
- * Copyright 2020 - MATTR Limited
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import {
   testRevealDocument,
   testSignedDocument,
@@ -27,14 +14,14 @@ import {
   testRevealVcDocumentJwk
 } from "./__fixtures__";
 
-import { BbsBlsSignatureProof2020, deriveProof } from "../src/index";
+import { BbsTermwiseSignatureProof2021, deriveProof } from "../src/index";
 
 import jsigs from "jsonld-signatures";
 
 describe("BbsBlsSignatureProof2020", () => {
   it("should derive proof", async () => {
     const result = await deriveProof(testSignedDocument, testRevealDocument, {
-      suite: new BbsBlsSignatureProof2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       documentLoader: customLoader
     });
     expect(result).toBeDefined();
@@ -42,7 +29,7 @@ describe("BbsBlsSignatureProof2020", () => {
 
   it("should derive proof revealing all statements", async () => {
     const result = await deriveProof(testSignedDocument, testRevealDocument, {
-      suite: new BbsBlsSignatureProof2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       documentLoader: customLoader
     });
     expect(result).toBeDefined();
@@ -53,7 +40,7 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedVcDocument,
       testRevealVcDocument,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
@@ -65,7 +52,7 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedDocumentMultiProofs,
       testRevealDocument,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
@@ -78,7 +65,7 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedDocumentMultiDifProofs,
       testRevealDocument,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
@@ -93,13 +80,13 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedDocumentMultiProofs,
       testRevealDocument,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
 
     const derivedProofVerified = await jsigs.verify(result, {
-      suite: new BbsBlsSignatureProof2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader
     });
@@ -114,7 +101,7 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedNestedVcDocument,
       testNestedRevealFullDocument,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
@@ -129,7 +116,7 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedVcDocumentJwk,
       testRevealVcDocumentJwk,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
@@ -142,7 +129,7 @@ describe("BbsBlsSignatureProof2020", () => {
 
     // verifying proof is valid
     const derivedProofVerified = await jsigs.verify(derivedProof, {
-      suite: new BbsBlsSignatureProof2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader
     });
@@ -155,7 +142,7 @@ describe("BbsBlsSignatureProof2020", () => {
       testSignedNestedVcDocument,
       testNestedRevealDocument,
       {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       }
     );
@@ -170,7 +157,7 @@ describe("BbsBlsSignatureProof2020", () => {
         [testSignedDocument, testSignedDocument],
         testRevealDocument,
         {
-          suite: new BbsBlsSignatureProof2020(),
+          suite: new BbsTermwiseSignatureProof2021(),
           documentLoader: customLoader
         }
       )
@@ -180,7 +167,7 @@ describe("BbsBlsSignatureProof2020", () => {
   it("should throw an error when proofDocument doesn't include a BBSBlsSignatureProof2020", async () => {
     await expect(
       deriveProof(testSignedDocumentEd25519, testRevealDocument, {
-        suite: new BbsBlsSignatureProof2020(),
+        suite: new BbsTermwiseSignatureProof2021(),
         documentLoader: customLoader
       })
     ).rejects.toThrowError(

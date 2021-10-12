@@ -34,6 +34,7 @@ import expExampleDidDoc2 from "./data/exp_diddoc_issuer2.json";
 import expExampleDidKey3 from "./data/exp_didkey_issuer3.json";
 import expExampleDidDoc3 from "./data/exp_diddoc_issuer3.json";
 import bbsWithProofContext from "./contexts/bbs_with_proof.json";
+import bbsTermwise from "./contexts/bbs-termwise-2021.json";
 
 export const documents: any = {
   "https://w3id.org/security/v3-unstable": securityV3,
@@ -59,7 +60,8 @@ export const documents: any = {
   "did:example:issuer2#bbs-bls-key1": expExampleDidKey2,
   "did:example:issuer3": expExampleDidDoc3,
   "did:example:issuer3#bbs-bls-key1": expExampleDidKey3,
-  "https://w3id.org/security/suites/bls12381-2020/v1": bbsWithProofContext
+  "https://w3id.org/security/suites/bls12381-2020/v1": bbsWithProofContext,
+  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld": bbsTermwise
 };
 
 const customDocLoader = (url: string): any => {

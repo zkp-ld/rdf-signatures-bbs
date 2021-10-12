@@ -7,26 +7,21 @@ import {
   expVCDocument,
   expVCDocument2,
   expVCDocument3,
-  expVCDocument4,
   expRevealDocument,
   expRevealDocument2,
   expRevealDocument3,
-  expRevealDocument4,
   customLoader
 } from "./__fixtures__";
 
 import {
-  BbsBlsSignature2020,
-  BbsBlsSignatureProof2020,
-  BbsBlsSignatureProofTermwise2020,
-  BbsBlsSignatureTermwise2020,
+  BbsTermwiseSignatureProof2021,
+  BbsTermwiseSignature2021,
   Bls12381G2KeyPair,
   verifyProofMulti
 } from "../src/index";
 
 import {
   signDeriveMultiJSigLike,
-  signDeriveVerify,
   signDeriveVerifyMulti,
   signDeriveVerifyMultiJSigLike
 } from "./utils";
@@ -35,34 +30,27 @@ const expKey1 = new Bls12381G2KeyPair(expExampleBls12381KeyPair);
 const expKey2 = new Bls12381G2KeyPair(expExampleBls12381KeyPair2);
 const expKey3 = new Bls12381G2KeyPair(expExampleBls12381KeyPair3);
 
-describe("experimental verifiable credentials", () => {
-  it("[StringStatement] should sign, derive proof, and verify proof on experimental verifiable credential", async () => {
+describe("BbsTermwise2021 and BbsTermwiseSignature2021", () => {
+  it("should sign and verify a VC, then derive and verify a proof from it", async () => {
     const vc = { ...expVCDocument };
-    await signDeriveVerify(
-      vc,
-      expRevealDocument,
-      {},
-      expKey1,
+    const hiddenUris = [
+      "http://example.org/credentials/1234",
+      "http://example.org/credentials/9876",
+      "http://example.org/credentials/abcd",
+      "did:example:holder1",
+      "did:example:cityA"
+    ];
+
+    await signDeriveVerifyMulti(
+      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
+      hiddenUris,
       customLoader,
-      BbsBlsSignature2020,
-      BbsBlsSignatureProof2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
   });
 
-  it("[TermwiseStatement] should sign, derive proof, and verify proof on experimental verifiable credential", async () => {
-    const vc = { ...expVCDocument };
-    await signDeriveVerify(
-      vc,
-      expRevealDocument,
-      {},
-      expKey1,
-      customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
-    );
-  });
-
-  it("[TermwiseStatement] should sign multiple VCs, derive a proof from them, and verify the proof", async () => {
+  it("should sign and verify multiple VCs, then derive and verify proofs from them", async () => {
     const vc = { ...expVCDocument };
     const vc2 = { ...expVCDocument2 };
     const vc3 = { ...expVCDocument3 };
@@ -70,8 +58,6 @@ describe("experimental verifiable credentials", () => {
       "http://example.org/credentials/1234",
       "http://example.org/credentials/9876",
       "http://example.org/credentials/abcd",
-      "dummy",
-      "dummy",
       "did:example:holder1",
       "did:example:cityA"
     ];
@@ -84,55 +70,31 @@ describe("experimental verifiable credentials", () => {
       ],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
   });
 
-  it("[TermwiseStatement] should sign single VC, derive a proof from it, and verify the proof", async () => {
+  it("should sign and verify a VC, then derive and verify a proof from it using jsonld-signature-like APIs", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
       "http://example.org/credentials/9876",
       "http://example.org/credentials/abcd",
-      "dummy",
-      "dummy",
       "did:example:holder1",
       "did:example:cityA"
     ];
 
-    await signDeriveVerifyMulti(
+    await signDeriveVerifyMultiJSigLike(
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
   });
 
-  it("[TermwiseStatement] (2) should sign single VC, derive a proof from it, and verify the proof", async () => {
-    const vc = { ...expVCDocument4 };
-    const hiddenUris = [
-      "http://example.org/credentials/1234",
-      "http://example.org/credentials/9876",
-      "http://example.org/credentials/abcd",
-      "did:example:holder1",
-      "did:example:holder2",
-      "did:example:cityA"
-    ];
-
-    await signDeriveVerifyMulti(
-      [{ vc, revealDocument: expRevealDocument4, key: expKey1 }],
-      hiddenUris,
-      customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
-    );
-  });
-});
-
-describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs", () => {
-  it("should sign multiple VCs, derive a proof from them, and verify the proof", async () => {
+  it("should sign and verify multiple VCs, then derive and verify proofs from them using jsonld-signature-like APIs", async () => {
     const vc = { ...expVCDocument };
     const vc2 = { ...expVCDocument2 };
     const vc3 = { ...expVCDocument3 };
@@ -140,8 +102,6 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
       "http://example.org/credentials/1234",
       "http://example.org/credentials/9876",
       "http://example.org/credentials/abcd",
-      "dummy",
-      "dummy",
       "did:example:holder1",
       "did:example:cityA"
     ];
@@ -154,53 +114,12 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
       ],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
   });
 
-  it("should sign single VC, derive a proof from it, and verify the proof", async () => {
-    const vc = { ...expVCDocument };
-    const hiddenUris = [
-      "http://example.org/credentials/1234",
-      "http://example.org/credentials/9876",
-      "http://example.org/credentials/abcd",
-      "dummy",
-      "dummy",
-      "did:example:holder1",
-      "did:example:cityA"
-    ];
-
-    await signDeriveVerifyMultiJSigLike(
-      [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
-      hiddenUris,
-      customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
-    );
-  });
-
-  it("[TermwiseStatement] (2) should sign single VC, derive a proof from it, and verify the proof", async () => {
-    const vc = { ...expVCDocument4 };
-    const hiddenUris = [
-      "http://example.org/credentials/1234",
-      "http://example.org/credentials/9876",
-      "http://example.org/credentials/abcd",
-      "did:example:holder1",
-      "did:example:holder2",
-      "did:example:cityA"
-    ];
-
-    await signDeriveVerifyMultiJSigLike(
-      [{ vc, revealDocument: expRevealDocument4, key: expKey1 }],
-      hiddenUris,
-      customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
-    );
-  });
-
-  it("[TermwiseStatement] should verify derived proofs", async () => {
+  it("should verify derived proofs", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -212,12 +131,12 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
 
     const result = await verifyProofMulti(derivedProofs, {
-      suite: new BbsBlsSignatureProofTermwise2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
       expansionMap: false
@@ -225,7 +144,7 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
     expect(result.verified).toBeTruthy();
   });
 
-  it("[TermwiseStatement] should not verify derived proofs where credentialSubject.type is edited", async () => {
+  it("should not verify derived proofs where credentialSubject.type is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -237,8 +156,8 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
 
     let modifiedProofs = [...derivedProofs];
@@ -249,7 +168,7 @@ describe("experimental verifiable credentials using JSON-LD-Signatures-like APIs
 ${JSON.stringify(modifiedProofs, null, 2)}`);
 
     const result = await verifyProofMulti(modifiedProofs, {
-      suite: new BbsBlsSignatureProofTermwise2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
       expansionMap: false
@@ -259,7 +178,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not verify derived proofs where anonymized credential.id is edited", async () => {
+  it("should not verify derived proofs where anonymized credential.id is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -271,8 +190,8 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
 
     let modifiedProofs = [...derivedProofs];
@@ -283,7 +202,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
 ${JSON.stringify(modifiedProofs, null, 2)}`);
 
     const result = await verifyProofMulti(modifiedProofs, {
-      suite: new BbsBlsSignatureProofTermwise2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
       expansionMap: false
@@ -293,7 +212,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not verify derived proofs where anonymized credentialSubject.id is edited", async () => {
+  it("should not verify derived proofs where anonymized credentialSubject.id is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -305,8 +224,8 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
 
     let modifiedProofs = [...derivedProofs];
@@ -317,7 +236,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
 ${JSON.stringify(modifiedProofs, null, 2)}`);
 
     const result = await verifyProofMulti(modifiedProofs, {
-      suite: new BbsBlsSignatureProofTermwise2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
       expansionMap: false
@@ -327,7 +246,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not verify derived proofs where anonymized credentialSubject.*.id is edited", async () => {
+  it("should not verify derived proofs where anonymized credentialSubject.*.id is edited", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -339,8 +258,8 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
 
     let modifiedProofs = [...derivedProofs];
@@ -351,7 +270,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
 ${JSON.stringify(modifiedProofs, null, 2)}`);
 
     const result = await verifyProofMulti(modifiedProofs, {
-      suite: new BbsBlsSignatureProofTermwise2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
       expansionMap: false
@@ -361,14 +280,14 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     expect(result.verified).toBeFalsy();
   });
 
-  it("[TermwiseStatement] should not sign VC with invalid context", async () => {
+  it("should not sign VC with invalid context", async () => {
     let vc = { ...expVCDocument };
     vc["@context"] = [...vc["@context"]];
     vc["@context"].push("https://dummy.example.org/");
 
     const sign = () =>
       jsigs.sign(vc, {
-        suite: new BbsBlsSignatureTermwise2020({ key: expKey1 }),
+        suite: new BbsTermwiseSignature2021({ key: expKey1 }),
         purpose: new jsigs.purposes.AssertionProofPurpose(),
         documentLoader: customLoader,
         expansionMap: false
@@ -376,7 +295,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     await expect(sign).rejects.toThrow();
   });
 
-  it("[TermwiseStatement] should not be panicked due to Wasm error when modifying proofValue", async () => {
+  it("should not be panicked due to Wasm error when modifying proofValue", async () => {
     const vc = { ...expVCDocument };
     const hiddenUris = [
       "http://example.org/credentials/1234",
@@ -388,8 +307,8 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       [{ vc, revealDocument: expRevealDocument, key: expKey1 }],
       hiddenUris,
       customLoader,
-      BbsBlsSignatureTermwise2020,
-      BbsBlsSignatureProofTermwise2020
+      BbsTermwiseSignature2021,
+      BbsTermwiseSignatureProof2021
     );
 
     // remove first byte from proofValue
@@ -402,7 +321,7 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
 ${JSON.stringify(modifiedProofs, null, 2)}`);
 
     const result = await verifyProofMulti(modifiedProofs, {
-      suite: new BbsBlsSignatureProofTermwise2020(),
+      suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader,
       expansionMap: false

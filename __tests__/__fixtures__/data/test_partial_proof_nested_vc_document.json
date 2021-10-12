@@ -2,14 +2,14 @@
   "@context": [
     "https://www.w3.org/2018/credentials/v1",
     "https://www.w3.org/2018/credentials/examples/v1",
-    "https://w3id.org/security/suites/bls12381-2020/v1"
+    "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
   ],
   "id": "https://example.gov/credentials/3732",
   "type": ["UniversityDegreeCredential", "VerifiableCredential"],
   "credentialSubject": {
     "id": "did:example:489398593",
     "degree": {
-      "id": "urn:bnid:_:c14n0",
+      "id": "urn:anon:5302221b-172a-46dd-9358-f16d12fdfc7a",
       "type": "BachelorDegree",
       "name": "Bachelor of Science and Arts"
     }
@@ -17,11 +17,11 @@
   "issuanceDate": "2020-03-10T04:24:12.164Z",
   "issuer": "did:example:489398593",
   "proof": {
-    "type": "BbsBlsSignatureProof2020",
-    "created": "2021-04-26T17:55:05Z",
-    "nonce": "58pQbOsBR7l+FwAGs1bDWiCyQXJFkmSNBHC0BDzX4BU6khM6VbJZBqb5RGONkGFJBNQ=",
+    "type": "BbsTermwiseSignatureProof2021",
+    "created": "2021-10-12T12:18:38Z",
+    "nonce": "xToT0+uqkA+DeeT8qB5zwwp/lod1Je71PTk3ECp0qfvzpumjoEOTdQTQ1xIWQ/R7yK0=",
     "proofPurpose": "assertionMethod",
-    "proofValue": "AA4f74GNgyGujm0aHzKd2xuUpetxhpFaXhW6twInMfmFNZYW2/RlShvRGE6Ios/dgr5e+qyGGOGkBWSdSOaFGsseo6Ne/0429iKAZpWo/abD6r8kIszn8L5UL43NxCia/UtQB5HjqBPYelAsepN3aNryZNUc0h7UcyjTqgp9wGfPADW4KJIBXv4SvwqwRZgcDzdKxwAAAHSStf9LAUTsKXnlWL7hE0x86/4wzpDFRWCE/WgkCz/mqQlt+vlWDwm9k7PlwiPoLhYAAAACBLS2axWssG0oNnqk02If5qm6ToalAP/TGB/cORH00KNrKMvhMMwI54odGP5qy4qJmQp+cYcj4bffIfaXbRGNqJdHYKbeHk5ZV/A91vnI3mxQfhtKp1YmNC2DpUfw/hSTAubh5Iv2UMFWc1Gl+hYuDAAAAARiA7M07jBRe+QGbPgLg1nFgiD26GDBD+wYm93qM+HfwBKYqEbeXVveTsx589OTilT5HP2b6cOfSwCJyU8xU/uKPNYhNGqkGZgPXjIVfvRWFblSX822hnMBOYzdCroarsdUCom4NMlFvAQeZAQ6CtZUkXSKAizYCdx5yeHjjkveAg==",
+    "proofValue": "gxg4mDAAAQIDBAUGBwgJCgsMDQ4PFBUWFxgYGBkYGhgbGBwYHRgeGB8YIBghGCIYIxgkGCUYJhgnGCgYKRgqGCsYLBgtGC4YLxgwGDEYMhgzWQLcmQSQYwTxG9RzlyodzRhRR/N8EW5d9g/GqPomn4T/Y65J00ADJV5/1t3w5JEmy8kMjGnzhmb+I863FBldQzxZKl2UJnHXA3a/s9UcBK3dVQxDnfEXk54jzj8zYSmXyGD1sXoFH5u51NPDz4hns9ylFEAViKPa6wxu8Wwt0mU6JfWFE1STCEq8i4HZTYNrlSPFAAAAdLJ61sxkbZuIfxOOv3F5m3wHNhMLKvwfhqK2BuwRqxt6LxOu2XGNwLIAMoVMtSipSQAAAAJOUGB8QG44rXvOeEpyJQ2So/27HpePPjU5APFo+tI1SFmu1w00r+LknIJy29rdIGIv2mPWev9SpIaFqWrS7GN2tCUxzOufDxjaQpdHkjb8PWVYUOLjanIEESZFl67d8rJNn7wWtrHWlRZKy/ljh1boAAAADSVQ1dLd/JA/Iuabrgi8pCb6ZECJyug0Z/mgQgNdq8vSOL65usIuaTrXnKgElRdidJJUzEJsNUmc9yNWyRCdPScJarcwWvqU2HRE4Qq2NZFCl/tP1gqWbTOVdG8gJGCGgiBUogMreOnWpnXYBoXeA1P0AwvyNmyO82E1lRlupmPJL921Bqk9Nu419NU6noz3X9fLhuihjIrwRf3K6Aph4OxSfPgUiYc6UIpX3DuFpwXpshYvr5J/oum4rY0Gy3vkbhQMxGJpchgzS0uTB1VIzVg/r8PVk4myVssdt2mfQRGxFAzEYmlyGDNLS5MHVUjNWD+vw9WTibJWyx23aZ9BEbEUDMRiaXIYM0tLkwdVSM1YP6/D1ZOJslbLHbdpn0ERsQlv6n+B+Pc4yiuypGpGeRFh5cqy8q10i62Va5laiIVeZtUVLBWT1IQI3zi4sLenm2gNGCDYEffKC9qdRzPrk5RDMnHMr1oXqF/hRUdlqDni0sdyMZ5H21QdKY3KpFGu33LqcDBbNb8Adv/5AM7j0g5RuOE6KeUcYpfmiRAacA78",
     "verificationMethod": "did:example:489398593#test"
   }
 }

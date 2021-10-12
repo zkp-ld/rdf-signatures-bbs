@@ -41,7 +41,7 @@ export interface DeriveProofMultiOptions {
   /**
    * URIs to be hiddened in the resulting proof
    */
-  readonly hiddenUris: string[];
+  readonly hiddenUris?: string[];
 }
 
 export interface DeriveProofMultiInputDocs {

@@ -47,11 +47,9 @@ import expExampleBls12381KeyPair3 from "./data/exp_exampleBls12381KeyPair3.json"
 import expVCDocument from "./data/exp_vc.json";
 import expVCDocument2 from "./data/exp_vc2.json";
 import expVCDocument3 from "./data/exp_vc3.json";
-import expVCDocument4 from "./data/exp_vc4.json";
 import expRevealDocument from "./data/exp_reveal_document.json";
 import expRevealDocument2 from "./data/exp_reveal_document2.json";
 import expRevealDocument3 from "./data/exp_reveal_document3.json";
-import expRevealDocument4 from "./data/exp_reveal_document4.json";
 import testSignedDocumentTermwise from "./data/test_signed_document_termwise.json";
 
 export {
@@ -90,10 +88,8 @@ export {
   expVCDocument,
   expVCDocument2,
   expVCDocument3,
-  expVCDocument4,
   expRevealDocument,
   expRevealDocument2,
   expRevealDocument3,
-  expRevealDocument4,
   testSignedDocumentTermwise
 };

@@ -46,4 +46,8 @@ export interface DeriveProofOptions {
    * Indicates whether to compact the resulting proof
    */
   readonly skipProofCompaction?: boolean;
+  /**
+   * URIs to be hiddened in the resulting proof
+   */
+  readonly hiddenUris?: string[];
 }

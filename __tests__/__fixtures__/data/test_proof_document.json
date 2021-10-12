@@ -1,9 +1,9 @@
 {
   "@context": [
-    "http://schema.org/",
-    "https://w3id.org/security/suites/bls12381-2020/v1"
+    "https://schema.org",
+    "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
   ],
-  "id": "urn:bnid:_:c14n0",
+  "id": "urn:anon:c50c612a-d95b-4476-a576-ce9f062b51ff",
   "type": "Person",
   "email": "jane.doe@example.com",
   "firstName": "Jane",
@@ -11,11 +11,11 @@
   "lastName": "Does",
   "telephone": "(425) 123-4567",
   "proof": {
-    "type": "BbsBlsSignatureProof2020",
-    "nonce": "Qvv+50burAq9dHFIE6drJWKVcQj4G+IdwQXT/S2mHkxwbd4ZI/d4lrWQ1uiJPNToHx4=",
-    "proofValue": "AAoD/5BmimoSIcEAL2qzBgzHMkRF5GiNLInT30Klkp/DKgzYdIxad+DDoKSLtu3HqUJZ44bT77EubVQclHcJl3zsI826G77z53am0jZRBCmVyTRqbjIbmlBGR+DlSPs/e7Vo35Q8hKq0wBCQBLwQ6+ArSshYVPD3fvTd6lsOpvz0fJPkDYmCXhu2w9vdXZYgsobsyAAAAHSNUZ27LZKohwy3M8OoNBk59TfX8sb/ss8QagDeQ2IOQ6Tb6tyRVeF0kkDNuYno4JAAAAACXYgOfWJ8s+gDYgb/7qXnJ8amB7hhUJxWMkFGQd1D7yopAqyp9S9lwqwY5Zi8YwxfO9JjX9g5TYBorYVooI25molA0BcvIu0IzX23j9GJ9gpJuTHCUKtizD/tgepu+H6ow/mbsIeTlpUlAlasX7NIhgAAAAJpOZ/vLm9Omn7GqKBnoxCMK+dqi4Hr9NsGNOSk2qnW9Erf74dJA+e4CRMfP4ZCbYbbx7Ex+4cckdqUH4WRby4M",
-    "verificationMethod": "did:example:489398593#test",
+    "type": "BbsTermwiseSignatureProof2021",
+    "created": "2021-10-12T11:59:27Z",
+    "nonce": "gEOcA2d2FCnsqZ9mIodriYKsmqVKFHhGct+uX69d1mnQrWQt6Vbi1JGd8GgxDq0eO54=",
     "proofPurpose": "assertionMethod",
-    "created": "2020-10-30T04:34:10Z"
+    "proofValue": "gxgomCgAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGBgZGBoYGxgcGB0YHhgfGCAYIRgiGCMYJBglGCYYJ1kCPKI9v0+d4oCjBXSVo1J3iuDQ7vGmhoGnMlHQN2eR3lKPJ9gxy183AthvG5a8K6R9cZPKBKdYtaoKOWCspIriFsMqgSbfJj17e8pACRIwr1TsDmkQ0Wz8srjPID5WPw9DIJblojRRyKW4+RqfLZ0Az/yXhyOXhgZlj5Y5Hf8kSiuc5g88l5jyWlmK7CkyzN9AbwAAAHSlZI0QOtviYoaoV10doUFVc3VIOivRMvGK3wc9r4NjxzYjZSpCZhdK9Ayn+xoibbsAAAACHmbO662Bt48vti75L6XdiJh5VUW8m1JiE/yRvd4TiJNX5DkmpXfba7I3PWUEsu/ZIruf0NN0OiSRMhNaI+sR4JHmZagbsrH8HzHwHN7ZO8Kpe2Vn8VkYEBIZINAysbJEL+POt7/nxuD5/Z2wpoc30wAAAAhrmCVnEM/GB+fIKjBf6A3u7mxtEeT1MGJOye1Pp7P8MGfHrXbLkGkZIRTQCm4i7qrwdk3PG7Y/VWQwf4MxKDEobtkljJJ0tpzSAxhde/vzoOyi7+ANWAaMTelrWVWK7Btu2SWMknS2nNIDGF17+/Og7KLv4A1YBoxN6WtZVYrsG27ZJYySdLac0gMYXXv786Dsou/gDVgGjE3pa1lViuwbbtkljJJ0tpzSAxhde/vzoOyi7+ANWAaMTelrWVWK7Btu2SWMknS2nNIDGF17+/Og7KLv4A1YBoxN6WtZVYrsG27ZJYySdLac0gMYXXv786Dsou/gDVgGjE3pa1lViuwb",
+    "verificationMethod": "did:example:489398593#test"
   }
 }
