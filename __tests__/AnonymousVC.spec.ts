@@ -106,10 +106,11 @@ describe("BbsTermwise2021 and BbsTermwiseSignature2021", () => {
       testAnonymousVcComplexDocument,
       testRevealAnonymousVcComplexDocument,
       key,
+      customLoader,
       BbsTermwiseSignature2021,
       BbsTermwiseSignatureProof2021,
       {
-        id: "urn:bnid:_:c14n2",
+        id: expect.anything(),
         batchNumber: "1183738569",
         type: "VaccinationEvent"
       }
