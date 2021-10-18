@@ -11,14 +11,11 @@ import {
   VerifyProofOptions,
   VerifySignatureOptions,
   SuiteSignOptions,
-  Statement
+  Statement,
+  DidDocumentPublicKey
 } from "./types";
-import { w3cDate } from "./utilities";
+import { w3cDate, SECURITY_CONTEXT_URLS } from "./utilities";
 import { TermwiseStatement } from "./TermwiseStatement";
-
-const SECURITY_CONTEXT_URL = [
-  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
-];
 
 export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
   /**
@@ -107,14 +104,14 @@ export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
     let proof;
     if (this.proof) {
       // use proof JSON-LD document passed to API
-      proof = await jsonld.compact(this.proof, SECURITY_CONTEXT_URL, {
+      proof = await jsonld.compact(this.proof, SECURITY_CONTEXT_URLS, {
         documentLoader,
         expansionMap,
         compactToRelative: false
       });
     } else {
       // create proof JSON-LD document
-      proof = { "@context": SECURITY_CONTEXT_URL };
+      proof = { "@context": SECURITY_CONTEXT_URLS };
     }
 
     // ensure proof type is set
@@ -141,7 +138,7 @@ export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
     }
 
     // allow purpose to update the proof; the `proof` is in the
-    // SECURITY_CONTEXT_URL `@context` -- therefore the `purpose` must
+    // SECURITY_CONTEXT_URLS `@context` -- therefore the `purpose` must
     // ensure any added fields are also represented in that same `@context`
     proof = await purpose.update(proof, {
       document,
@@ -333,7 +330,10 @@ export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
    * @param documentLoader {function}
    * @param expansionMap {function}
    */
-  async getVerificationMethod({ proof, documentLoader }: any): Promise<any> {
+  async getVerificationMethod({
+    proof,
+    documentLoader
+  }: any): Promise<DidDocumentPublicKey> {
     let { verificationMethod } = proof;
 
     if (typeof verificationMethod === "object") {
@@ -349,14 +349,18 @@ export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
     const result = await jsonld.frame(
       verificationMethod,
       {
-        "@context": SECURITY_CONTEXT_URL,
+        // adding jws-2020 context to allow publicKeyJwk
+        "@context": [
+          "https://w3id.org/security/v2",
+          "https://w3id.org/security/suites/jws-2020/v1"
+        ],
         "@embed": "@always",
         id: verificationMethod
       },
       {
         documentLoader,
         compactToRelative: false,
-        expandContext: SECURITY_CONTEXT_URL
+        expandContext: SECURITY_CONTEXT_URLS
       }
     );
     if (!result) {
@@ -405,7 +409,10 @@ export class BbsTermwiseSignature2021 extends suites.LinkedDataProof {
     let { verifier } = this;
 
     if (!verifier) {
-      const key = await this.LDKeyClass.from(verificationMethod);
+      // Construct a key pair class from the returned verification method
+      const key = verificationMethod.publicKeyJwk
+        ? await this.LDKeyClass.fromJwk(verificationMethod)
+        : await this.LDKeyClass.from(verificationMethod);
       verifier = key.verifier(key, this.alg, this.type);
     }
 

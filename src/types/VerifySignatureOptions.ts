@@ -11,6 +11,8 @@
  * limitations under the License.
  */
 
+import { DidDocumentPublicKey } from "src";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Options for verifying a signature
@@ -27,7 +29,7 @@ export interface VerifySignatureOptions {
   /**
    * Verification method to verify the signature against
    */
-  readonly verificationMethod: string;
+  readonly verificationMethod: DidDocumentPublicKey;
   /**
    * Proof to verify
    */

@@ -28,10 +28,7 @@ import {
 } from "./types";
 import { BbsTermwiseSignature2021 } from "./BbsTermwiseSignature2021";
 import { TermwiseStatement } from "./TermwiseStatement";
-
-const SECURITY_CONTEXT_URL = [
-  "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
-];
+import { SECURITY_CONTEXT_URLS } from "./utilities";
 
 class URIAnonymizer {
   private prefix = "urn:anon:";
@@ -87,7 +84,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     });
 
     this.proof = {
-      "@context": ["https://www.zkp-ld.org/bbs-termwise-2021.jsonld"],
+      "@context": SECURITY_CONTEXT_URLS,
       type: "BbsTermwiseSignatureProof2021"
     };
 
@@ -252,7 +249,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       {
         documentLoader,
         compactToRelative: false,
-        expandContext: SECURITY_CONTEXT_URL
+        expandContext: SECURITY_CONTEXT_URLS
       }
     );
     if (!result) {
@@ -557,14 +554,14 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       let derivedProof;
       if (this.proof) {
         // use proof JSON-LD document passed to API
-        derivedProof = await jsonld.compact(this.proof, SECURITY_CONTEXT_URL, {
+        derivedProof = await jsonld.compact(this.proof, SECURITY_CONTEXT_URLS, {
           documentLoader,
           expansionMap,
           compactToRelative: false
         });
       } else {
         // create proof JSON-LD document
-        derivedProof = { "@context": SECURITY_CONTEXT_URL };
+        derivedProof = { "@context": SECURITY_CONTEXT_URLS };
       }
 
       // ensure proof type is set

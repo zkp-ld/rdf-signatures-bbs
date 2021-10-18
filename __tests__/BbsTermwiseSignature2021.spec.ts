@@ -7,7 +7,8 @@ import {
   testBadSignedDocument,
   customLoader,
   testVcDocument,
-  testSignedVcDocument
+  testSignedVcDocument,
+  testSignedVcDocumentJwk
 } from "./__fixtures__";
 import { Bls12381G2KeyPair, BbsTermwiseSignature2021 } from "../src/index";
 
@@ -85,6 +86,16 @@ describe("BbsTermwiseSignature2021", () => {
 
   it("should verify verifiable credential with jsigs", async () => {
     const verificationResult = await jsigs.verify(testSignedVcDocument, {
+      suite: new BbsTermwiseSignature2021(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader
+    });
+    expect(verificationResult).toBeDefined();
+    expect(verificationResult.verified).toBeTruthy();
+  });
+
+  it("should verify verifiable credential with JWK and jsigs", async () => {
+    const verificationResult = await jsigs.verify(testSignedVcDocumentJwk, {
       suite: new BbsTermwiseSignature2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader

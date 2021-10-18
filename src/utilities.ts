@@ -11,7 +11,7 @@
 import jsonld from "jsonld";
 import { GetProofsOptions, GetProofsResult, GetTypeOptions } from "./types";
 
-const SECURITY_CONTEXT_URL = [
+export const SECURITY_CONTEXT_URLS = [
   "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
 ];
 
@@ -42,7 +42,7 @@ export const getProofs = async (
   if (!skipProofCompaction) {
     // If we must compact the proof then we must first compact the input
     // document to find the proof
-    document = await jsonld.compact(document, SECURITY_CONTEXT_URL, {
+    document = await jsonld.compact(document, SECURITY_CONTEXT_URLS, {
       documentLoader,
       expansionMap,
       compactToRelative: false
@@ -60,7 +60,7 @@ export const getProofs = async (
   }
 
   proofs = proofs.map((matchedProof: any) => ({
-    "@context": SECURITY_CONTEXT_URL,
+    "@context": SECURITY_CONTEXT_URLS,
     ...matchedProof
   }));
 
