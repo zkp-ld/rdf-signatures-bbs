@@ -22,7 +22,7 @@ import {
 
 const key = new Bls12381G2KeyPair(exampleBls12381KeyPair);
 
-describe("BbsTermwise2021 and BbsTermwiseSignature2021", () => {
+describe("BbsTermwiseSignature2021 and BbsTermwiseSignatureProof2021", () => {
   it("should sign, derive proof, and verify proof on anonymous verifiable credential", async () => {
     const vc = { ...testAnonymousVcDocument };
     const hiddenUris: any[] = ["did:example:489398593"];

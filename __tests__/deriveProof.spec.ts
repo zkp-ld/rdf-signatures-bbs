@@ -18,7 +18,7 @@ import { BbsTermwiseSignatureProof2021, deriveProof } from "../src/index";
 
 import jsigs from "jsonld-signatures";
 
-describe("BbsBlsSignatureProof2020", () => {
+describe("BbsTermwiseSignatureProof2021", () => {
   it("should derive proof", async () => {
     const result = await deriveProof(testSignedDocument, testRevealDocument, {
       suite: new BbsTermwiseSignatureProof2021(),
