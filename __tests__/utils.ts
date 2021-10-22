@@ -112,30 +112,12 @@ export const signDeriveVerifyMulti = async (
   });
   expect(derivedProofs.length).toEqual(vcRevealKeys.length);
 
-  console.log(`
-# URIs to be hidden:
-${JSON.stringify(hiddenUris, null, 2)}`);
-  for (let i = 0; i < vcRevealKeys.length; i++) {
-    console.log(`
-# issued VCs (${i}):
-${JSON.stringify(vcRevealKeys[i].signedVc, null, 2)}`);
-    console.log(`
-# reveal documents (${i}):
-${JSON.stringify(vcRevealKeys[i].revealDocument, null, 2)}`);
-    console.log(`
-# derived proofs (${i}):
-${JSON.stringify(derivedProofs[i], null, 2)}`);
-  }
-
   // Verifier verifies proof
   const result = await suite.verifyProofMulti({
     inputDocuments: derivedProofs,
     documentLoader: customLoader,
     purpose: new jsigs.purposes.AssertionProofPurpose()
   });
-  console.log(`
-# Verifier verifies Proof:
-${JSON.stringify(result, null, 2)}`);
 
   expect(result.verified).toBeTruthy();
 };
@@ -162,10 +144,6 @@ export const signDeriveVerifyMultiJSigLike = async (
     documentLoader: customLoader,
     expansionMap: false
   });
-
-  console.log(`
-# Verifier verifies Proof:
-${JSON.stringify(result, null, 2)}`);
 
   expect(result.verified).toBeTruthy();
 };
@@ -212,21 +190,6 @@ export const signDeriveMultiJSigLike = async (
   });
 
   expect(derivedProofs.length).toEqual(vcRevealKeys.length);
-
-  console.log(`
-# URIs to be hidden:
-${JSON.stringify(hiddenUris, null, 2)}`);
-  for (let i = 0; i < documents.length; i++) {
-    console.log(`
-# issued VCs (${i}):
-${JSON.stringify(documents[i][0], null, 2)}`);
-    console.log(`
-# reveal documents (${i}):
-${JSON.stringify(documents[i][1], null, 2)}`);
-    console.log(`
-# derived proofs (${i}):
-${JSON.stringify(derivedProofs[i], null, 2)}`);
-  }
 
   return derivedProofs;
 };

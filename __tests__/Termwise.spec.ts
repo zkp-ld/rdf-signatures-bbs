@@ -163,10 +163,6 @@ describe("BbsTermwise2021 and BbsTermwiseSignature2021", () => {
     let modifiedProofs = [...derivedProofs];
     modifiedProofs[0].credentialSubject.type = "PersonXXX";
 
-    console.log(`
-# modified proofs (0):
-${JSON.stringify(modifiedProofs, null, 2)}`);
-
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -174,7 +170,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       expansionMap: false
     });
 
-    console.log(result);
     expect(result.verified).toBeFalsy();
   });
 
@@ -197,10 +192,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     let modifiedProofs = [...derivedProofs];
     modifiedProofs[0].id = "urn:anon:999";
 
-    console.log(`
-# modified proofs (0):
-${JSON.stringify(modifiedProofs, null, 2)}`);
-
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -208,7 +199,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       expansionMap: false
     });
 
-    console.log(result);
     expect(result.verified).toBeFalsy();
   });
 
@@ -231,10 +221,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     let modifiedProofs = [...derivedProofs];
     modifiedProofs[0].credentialSubject.id = "urn:anon:999";
 
-    console.log(`
-# modified proofs (0):
-${JSON.stringify(modifiedProofs, null, 2)}`);
-
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -242,7 +228,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       expansionMap: false
     });
 
-    console.log(result);
     expect(result.verified).toBeFalsy();
   });
 
@@ -265,10 +250,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     let modifiedProofs = [...derivedProofs];
     modifiedProofs[0].credentialSubject.homeLocation.id = "urn:anon:999";
 
-    console.log(`
-# modified proofs (0):
-${JSON.stringify(modifiedProofs, null, 2)}`);
-
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -276,7 +257,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       expansionMap: false
     });
 
-    console.log(result);
     expect(result.verified).toBeFalsy();
   });
 
@@ -316,10 +296,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
     modifiedProofs[0].proof.proofValue =
       modifiedProofs[0].proof.proofValue.slice(1);
 
-    console.log(`
-# modified proofs (0):
-${JSON.stringify(modifiedProofs, null, 2)}`);
-
     const result = await verifyProofMulti(modifiedProofs, {
       suite: new BbsTermwiseSignatureProof2021(),
       purpose: new jsigs.purposes.AssertionProofPurpose(),
@@ -327,7 +303,6 @@ ${JSON.stringify(modifiedProofs, null, 2)}`);
       expansionMap: false
     });
 
-    console.log(result);
     expect(result.verified).toBeFalsy();
   });
 });

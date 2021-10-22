@@ -193,7 +193,6 @@ describe("BbsTermwiseSignatureProof2021", () => {
       revealDocument: testRevealVcDocument,
       documentLoader: customLoader
     });
-    console.log(JSON.stringify(result, null, 2));
     expect(result).toBeDefined();
   });
 
