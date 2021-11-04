@@ -75,7 +75,15 @@ describe("BbsTermwiseSignatureProof2021", () => {
     expect(Array.isArray(result.proof)).toBe(false);
   });
 
-  it("should derive proofs from multiple proof documents and be able to verify them using jsonld-signatures library", async () => {
+  it.skip("should derive proofs from multiple proof documents and be able to verify them using jsonld-signatures library", async () => {
+    // Note: verification of a derived proof **with multiple signatures**
+    // is no longer consistent with jsigs.verify API.
+    // The original jsigs.verify verifies each proof in a **mutually independent** fashion,
+    // whereas our extension requires all the proofs to be verified **at the same time**
+    // (in order to achieve ZKP generation and verification.)
+    // Thus we gave up using jsigs.verify for derived proof verification
+    // and just skip this test, which will be removed later.
+
     const result = await deriveProof(
       testSignedDocumentMultiProofs,
       testRevealDocument,

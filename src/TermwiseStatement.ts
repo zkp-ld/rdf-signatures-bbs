@@ -191,7 +191,8 @@ export class TermwiseStatement implements Statement {
   }
 
   replace(from: string, to: string): TermwiseStatement {
-    const replaced = { ...this.buffer };
+    // deep copy
+    const replaced: Quad = JSON.parse(JSON.stringify(this.buffer));
 
     const s = replaced.subject;
     const p = replaced.predicate;

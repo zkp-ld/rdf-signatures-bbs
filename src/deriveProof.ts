@@ -87,7 +87,7 @@ export const deriveProofMulti = async (
         );
       }
 
-      return { document, proof: proofs[0], revealDocument };
+      return { document, proof: proofs, revealDocument };
     })
   );
 
@@ -184,7 +184,7 @@ export const verifyProofMulti = async (
         );
       }
 
-      return { document, proof: proofs[0] };
+      return { document, proof: proofs };
     })
   );
 

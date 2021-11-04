@@ -10,6 +10,8 @@ import {
   expRevealDocument,
   expRevealDocument2,
   expRevealDocument3,
+  testSignedDocumentMultiProofs,
+  testRevealDocument,
   customLoader
 } from "./__fixtures__";
 
@@ -17,6 +19,7 @@ import {
   BbsTermwiseSignatureProof2021,
   BbsTermwiseSignature2021,
   Bls12381G2KeyPair,
+  deriveProof,
   verifyProofMulti
 } from "../src/index";
 
@@ -304,5 +307,29 @@ describe("BbsTermwise2021 and BbsTermwiseSignature2021", () => {
     });
 
     expect(result.verified).toBeFalsy();
+  });
+
+  it("should derive proofs from multiple proof documents and be able to verify them", async () => {
+    const result = await deriveProof(
+      testSignedDocumentMultiProofs,
+      testRevealDocument,
+      {
+        hiddenUris: [],
+        suite: new BbsTermwiseSignatureProof2021(),
+        documentLoader: customLoader
+      }
+    );
+
+    // Verifier verifies proof
+    const derivedProofVerified = await verifyProofMulti([result], {
+      suite: new BbsTermwiseSignatureProof2021(),
+      purpose: new jsigs.purposes.AssertionProofPurpose(),
+      documentLoader: customLoader,
+      expansionMap: false
+    });
+
+    expect(result).toBeDefined();
+    expect(result.proof.length).toBe(2);
+    expect(derivedProofVerified.verified).toBeTruthy();
   });
 });

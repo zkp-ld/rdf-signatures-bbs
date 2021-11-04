@@ -100,7 +100,7 @@ export const signDeriveVerifyMulti = async (
       );
     }
 
-    vcRevealKey["proof"] = proofs[0];
+    vcRevealKey["proof"] = proofs;
     vcRevealKey["document"] = document;
   }
 
