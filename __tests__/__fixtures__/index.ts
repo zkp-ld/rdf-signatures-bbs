@@ -20,6 +20,7 @@ import testRevealDocument from "./data/test_reveal_document.json";
 import testSignedDocument from "./data/test_signed_document.json";
 import testSignedDocumentMultiProofs from "./data/test_signed_document_multi_proofs.json";
 import testSignedDocumentMultiDifProofs from "./data/test_signed_document_multi_dif_proofs.json";
+import testSignedDocumentMultiBadProofs from "./data/test_signed_document_multi_proofs_bad.json";
 import testSignedDocumentEd25519 from "./data/test_signed_document_ed25519.json";
 import testBadSignedDocument from "./data/test_bad_signed_document.json";
 import testProofDocument from "./data/test_proof_document.json";
@@ -63,6 +64,7 @@ export {
   testSignedDocument,
   testSignedDocumentMultiProofs,
   testSignedDocumentMultiDifProofs,
+  testSignedDocumentMultiBadProofs,
   testSignedDocumentEd25519,
   testProofDocument,
   testVcDocument,

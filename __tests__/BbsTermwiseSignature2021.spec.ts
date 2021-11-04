@@ -8,7 +8,9 @@ import {
   customLoader,
   testVcDocument,
   testSignedVcDocument,
-  testSignedVcDocumentJwk
+  testSignedVcDocumentJwk,
+  testSignedDocumentMultiProofs,
+  testSignedDocumentMultiBadProofs
 } from "./__fixtures__";
 import { Bls12381G2KeyPair, BbsTermwiseSignature2021 } from "../src/index";
 
@@ -102,5 +104,34 @@ describe("BbsTermwiseSignature2021", () => {
     });
     expect(verificationResult).toBeDefined();
     expect(verificationResult.verified).toBeTruthy();
+  });
+
+  it("should verify document with multiple proofs", async () => {
+    const verificationResult = await jsigs.verify(
+      testSignedDocumentMultiProofs,
+      {
+        suite: new BbsTermwiseSignature2021(),
+        purpose: new jsigs.purposes.AssertionProofPurpose(),
+        documentLoader: customLoader
+      }
+    );
+    expect(verificationResult).toBeDefined();
+    expect(verificationResult.verified).toBeTruthy();
+  });
+
+  it.skip("should not verify document with multiple proofs one of which is modified", async () => {
+    // Skipped:  this looks like an unexpected behaviour for me, it turns out expected result,
+    // according to the `jsonld-signatures` description.
+    // See https://github.com/yamdan/jsonld-signatures-bbs/issues/2
+    const verificationResult = await jsigs.verify(
+      testSignedDocumentMultiBadProofs,
+      {
+        suite: new BbsTermwiseSignature2021(),
+        purpose: new jsigs.purposes.AssertionProofPurpose(),
+        documentLoader: customLoader
+      }
+    );
+    expect(verificationResult).toBeDefined();
+    expect(verificationResult.verified).toBeFalsy();
   });
 });
