@@ -23,9 +23,11 @@ import testSignedDocumentMultiDifProofs from "./data/test_signed_document_multi_
 import testSignedDocumentMultiBadProofs from "./data/test_signed_document_multi_proofs_bad.json";
 import testSignedDocumentEd25519 from "./data/test_signed_document_ed25519.json";
 import testBadSignedDocument from "./data/test_bad_signed_document.json";
+import testBadSignedDocumentWithIncompatibleSuite from "./data/test_bad_signed_document_with_incompatible_suite.json";
 import testProofDocument from "./data/test_proof_document.json";
 import testPartialProofDocument from "./data/test_partial_proof_document.json";
 import testBadPartialProofDocument from "./data/test_bad_partial_proof_document.json";
+import testBadPartialProofDocumentWithIncompatibleSuite from "./data/test_bad_partial_proof_document_incompatible_suite.json";
 import testVcDocument from "./data/test_vc.json";
 import testSignedVcDocument from "./data/test_signed_vc.json";
 import testSignedVcDocumentJwk from "./data/test_signed_vc_jwk.json";
@@ -53,7 +55,6 @@ import expVCDocument3 from "./data/exp_vc3.json";
 import expRevealDocument from "./data/exp_reveal_document.json";
 import expRevealDocument2 from "./data/exp_reveal_document2.json";
 import expRevealDocument3 from "./data/exp_reveal_document3.json";
-import testSignedDocumentTermwise from "./data/test_signed_document_termwise.json";
 
 export {
   exampleBls12381KeyPair,
@@ -75,7 +76,9 @@ export {
   testRevealVcDocument,
   testPartialProofDocument,
   testBadPartialProofDocument,
+  testBadPartialProofDocumentWithIncompatibleSuite,
   testBadSignedDocument,
+  testBadSignedDocumentWithIncompatibleSuite,
   testNestedRevealDocument,
   testNestedRevealFullDocument,
   testNestedVcDocument,
@@ -95,7 +98,6 @@ export {
   expRevealDocument,
   expRevealDocument2,
   expRevealDocument3,
-  testSignedDocumentTermwise,
   testAnonymousVcComplexDocument,
   testRevealAnonymousVcComplexDocument
 };

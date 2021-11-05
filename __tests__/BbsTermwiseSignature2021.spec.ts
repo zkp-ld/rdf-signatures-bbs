@@ -5,6 +5,7 @@ import {
   testDocument,
   testSignedDocument,
   testBadSignedDocument,
+  testBadSignedDocumentWithIncompatibleSuite,
   customLoader,
   testVcDocument,
   testSignedVcDocument,
@@ -43,6 +44,19 @@ describe("BbsTermwiseSignature2021", () => {
       purpose: new jsigs.purposes.AssertionProofPurpose(),
       documentLoader: customLoader
     });
+    expect(verificationResult).toBeDefined();
+    expect(verificationResult.verified).toBeFalsy();
+  });
+
+  it("should not verify bad sig with imcompatible suite with jsigs", async () => {
+    const verificationResult = await jsigs.verify(
+      testBadSignedDocumentWithIncompatibleSuite,
+      {
+        suite: new BbsTermwiseSignature2021(),
+        purpose: new jsigs.purposes.AssertionProofPurpose(),
+        documentLoader: customLoader
+      }
+    );
     expect(verificationResult).toBeDefined();
     expect(verificationResult.verified).toBeFalsy();
   });

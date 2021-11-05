@@ -13,7 +13,8 @@ import {
   testPartialVcProof,
   testRevealAllDocument,
   testProofNestedVcDocument,
-  testPartialProofNestedVcDocument
+  testPartialProofNestedVcDocument,
+  testBadPartialProofDocumentWithIncompatibleSuite
 } from "./__fixtures__";
 import {
   Bls12381G2KeyPair,
@@ -39,11 +40,39 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     let result: any = await suite.deriveProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       revealDocument: testRevealDocument,
       documentLoader: customLoader
     });
     expect(result).toBeDefined();
+  });
+
+  it("should not verify derived document without proof", async () => {
+    const suite = new BbsTermwiseSignatureProof2021({
+      useNativeCanonize: false,
+      key
+    });
+
+    const { proofs, document } = await getProofs({
+      document: testSignedDocument,
+      proofType: BbsTermwiseSignatureProof2021.supportedDerivedProofType,
+      documentLoader: customLoader
+    });
+
+    let derivedProof: any = await suite.deriveProof({
+      document,
+      proof: proofs,
+      revealDocument: testRevealDocument,
+      documentLoader: customLoader
+    });
+
+    const result = await suite.verifyProof({
+      document: derivedProof.document,
+      proof: [], // remove proof
+      documentLoader: customLoader,
+      purpose: new jsigs.purposes.AssertionProofPurpose()
+    });
+    expect(result.verified).toBeFalsy();
   });
 
   it("should not verify partial derived proof with bad proof", async () => {
@@ -57,7 +86,25 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.verifyProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
+      documentLoader: customLoader,
+      purpose: new jsigs.purposes.AssertionProofPurpose()
+    });
+    expect(result.verified).toBeFalsy();
+  });
+
+  it("should not verify partial derived proof with incompatible suite", async () => {
+    const suite = new BbsTermwiseSignatureProof2021();
+
+    const { proofs, document } = await getProofs({
+      document: testBadPartialProofDocumentWithIncompatibleSuite,
+      proofType: BbsTermwiseSignatureProof2021.proofType,
+      documentLoader: customLoader
+    });
+
+    const result = await suite.verifyProof({
+      document,
+      proof: proofs,
       documentLoader: customLoader,
       purpose: new jsigs.purposes.AssertionProofPurpose()
     });
@@ -81,7 +128,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
     await expect(
       suite.deriveProof({
         document,
-        proof: proofs[0],
+        proof: proofs,
         revealDocument: testRevealAllDocument,
         documentLoader: customLoader
       })
@@ -105,7 +152,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
     await expect(
       suite.deriveProof({
         document,
-        proof: proofs[0],
+        proof: proofs,
         revealDocument: testRevealAllDocument,
         documentLoader: customLoader
       })
@@ -147,7 +194,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
     await expect(
       suite.deriveProof({
         document,
-        proof: proofs[0],
+        proof: proofs,
         revealDocument: testRevealAllDocument,
         documentLoader: customLoader
       })
@@ -168,7 +215,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.deriveProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       revealDocument: testRevealAllDocument,
       documentLoader: customLoader
     });
@@ -189,7 +236,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.deriveProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       revealDocument: testRevealVcDocument,
       documentLoader: customLoader
     });
@@ -207,7 +254,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.verifyProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       documentLoader: customLoader,
       purpose: new jsigs.purposes.AssertionProofPurpose()
     });
@@ -225,7 +272,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.verifyProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       documentLoader: customLoader,
       purpose: new jsigs.purposes.AssertionProofPurpose()
     });
@@ -243,7 +290,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.verifyProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       documentLoader: customLoader,
       purpose: new jsigs.purposes.AssertionProofPurpose()
     });
@@ -261,7 +308,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.verifyProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       documentLoader: customLoader,
       purpose: new jsigs.purposes.AssertionProofPurpose()
     });
@@ -279,7 +326,7 @@ describe("BbsTermwiseSignatureProof2021", () => {
 
     const result = await suite.verifyProof({
       document,
-      proof: proofs[0],
+      proof: proofs,
       documentLoader: customLoader,
       purpose: new jsigs.purposes.AssertionProofPurpose()
     });
