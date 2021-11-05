@@ -825,6 +825,13 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         // make array from (array | object)
         const proofs = Array.isArray(givenProof) ? givenProof : [givenProof];
 
+        // Empty proofs should be rejected
+        if (proofs.length === 0) {
+          throw new Error(
+            "documents to be verified must have at least one proof"
+          );
+        }
+
         // Canonicalize document: get N-Quads from JSON-LD
         const documentStatements: TermwiseStatement[] =
           await this.createVerifyDocumentData(document, {
