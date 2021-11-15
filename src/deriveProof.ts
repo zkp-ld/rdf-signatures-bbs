@@ -127,12 +127,18 @@ export const deriveProofMulti = async (
       delete compactProof[alias];
       delete compactProof["@context"];
 
+      if (compactProof.proof === undefined) {
+        throw new Error(
+          "All the proofs are vanished after proof-compaction. Possibly `@context` of the reveal document (JSON-LD frame) is inconsistent with the proof suite."
+        );
+      }
+
       /**
        * removes the @included tag when multiple proofs exist because the
        * @included tag messes up the canonicalized bytes leading to a bad
        * signature that won't verify.
        **/
-      if (compactProof.proof["@included"]) {
+      if (compactProof.proof && compactProof.proof["@included"]) {
         compactProof.proof = compactProof.proof["@included"];
       }
 
