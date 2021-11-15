@@ -3,7 +3,7 @@
     "https://schema.org",
     "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
   ],
-  "id": "urn:anon:c50c612a-d95b-4476-a576-ce9f062b51ff",
+  "id": "urn:anon:f1f65431-b637-46ef-bb65-5742861049c6",
   "type": "Person",
   "email": "jane.doe@example.com",
   "firstName": "Jane",
@@ -12,10 +12,10 @@
   "telephone": "(425) 123-4567",
   "proof": {
     "type": "BbsTermwiseSignatureProof2021",
-    "created": "2021-10-12T11:59:27Z",
-    "nonce": "gEOcA2d2FCnsqZ9mIodriYKsmqVKFHhGct+uX69d1mnQrWQt6Vbi1JGd8GgxDq0eO54=",
+    "created": "2021-10-11T20:49:28Z",
+    "nonce": "ttkuLHx8FoTcQIepv4yuwmII5bCo9+ntEtxhotPM3lgQnjh6KeAGX8f9llywnGbKeew=",
     "proofPurpose": "assertionMethod",
-    "proofValue": "gxgomCgAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGBgZGBoYGxgcGB0YHhgfGCAYIRgiGCMYJBglGCYYJ1kCPKI9v0+d4oCjBXSVo1J3iuDQ7vGmhoGnMlHQN2eR3lKPJ9gxy183AthvG5a8K6R9cZPKBKdYtaoKOWCspIriFsMqgSbfJj17e8pACRIwr1TsDmkQ0Wz8srjPID5WPw9DIJblojRRyKW4+RqfLZ0Az/yXhyOXhgZlj5Y5Hf8kSiuc5g88l5jyWlmK7CkyzN9AbwAAAHSlZI0QOtviYoaoV10doUFVc3VIOivRMvGK3wc9r4NjxzYjZSpCZhdK9Ayn+xoibbsAAAACHmbO662Bt48vti75L6XdiJh5VUW8m1JiE/yRvd4TiJNX5DkmpXfba7I3PWUEsu/ZIruf0NN0OiSRMhNaI+sR4JHmZagbsrH8HzHwHN7ZO8Kpe2Vn8VkYEBIZINAysbJEL+POt7/nxuD5/Z2wpoc30wAAAAhrmCVnEM/GB+fIKjBf6A3u7mxtEeT1MGJOye1Pp7P8MGfHrXbLkGkZIRTQCm4i7qrwdk3PG7Y/VWQwf4MxKDEobtkljJJ0tpzSAxhde/vzoOyi7+ANWAaMTelrWVWK7Btu2SWMknS2nNIDGF17+/Og7KLv4A1YBoxN6WtZVYrsG27ZJYySdLac0gMYXXv786Dsou/gDVgGjE3pa1lViuwbbtkljJJ0tpzSAxhde/vzoOyi7+ANWAaMTelrWVWK7Btu2SWMknS2nNIDGF17+/Og7KLv4A1YBoxN6WtZVYrsG27ZJYySdLac0gMYXXv786Dsou/gDVgGjE3pa1lViuwb",
+    "proofValue": "WzAsMSwyLDMsNCw1LDYsNyw4LDld.ACi3lFrozPjvkXSpZBc4yHNozBBhEXveZHBC4SFBWrOdSK2XbndohYnEDdEGrivopRuXXUqhSp7l42uABJNFOEK4YnzHM+sznf2Rumn9pKoS2aEIDNw2R78/IwZb+E79q2Ck9DdWaXT5DPKk4OQxRWOGnXxjXa55uzyNDs8Ue4i24ZzK2tN1pdj0hZEDvV2mDDAAAAB0jZB0kGY0gCc7n4Hp9C4ixAcCPdLqLMWZGNlju+ZZstkQSQHik6/rVBCqHgbc3j7FAAAAAgrxvQCi+/LgXS+lTmhhYgBwk0Y5I4s2sY4ioJHLqrBTOutJvWPJT987tmpiM39/xXt2CvW0ff/k8xy3vRjeZy2nZzhcP2SRaqabu+a8/SWSeXsf3aWR5ZxZ8VUji7s+RNrB+FTSFR+wZW9NUvWOV14AAAAIZeR1ElJEjLcB5qd2e5jlvwfyvwA+7W4ARt4A8lDmeiUYUAs9s567W276wsfkaJHD2jCAYcqYrez+w7Cz4ucC8BisBRtmPmKRmtqTXoGTQ3tlzYqBpHqNveupTx8czzMSGKwFG2Y+YpGa2pNegZNDe2XNioGkeo2966lPHxzPMxIYrAUbZj5ikZrak16Bk0N7Zc2KgaR6jb3rqU8fHM8zEhisBRtmPmKRmtqTXoGTQ3tlzYqBpHqNveupTx8czzMSGKwFG2Y+YpGa2pNegZNDe2XNioGkeo2966lPHxzPMxIYrAUbZj5ikZrak16Bk0N7Zc2KgaR6jb3rqU8fHM8zEg==",
     "verificationMethod": "did:example:489398593#test"
   }
 }

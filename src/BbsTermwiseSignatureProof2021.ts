@@ -381,33 +381,31 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
   }
 
   /**
-   * Calculate reveal indicies
+   * Calculate revealed indicies
    *
    * @param skolemizedDocumentStatements full document statements
    * @param revealedDocumentStatements revealed document statements
    * @param proofStatements proof statements
    *
-   * @returns {Promise<RevealResult>} revealed JSON-LD document and statements
+   * @returns {[number[], number[]]} a pair of revealed statementwise indicies and revealed termwise indicies
    */
   getIndicies(
     skolemizedDocumentStatements: Statement[],
     revealedDocumentStatements: Statement[],
     proofStatements: Statement[]
-  ): number[] {
-    const NUM_OF_TERMS_IN_STATEMENT = 4;
-
-    //Get the indicies of the revealed statements from the transformed input document offset
-    //by the number of proof statements
+  ): [number[], number[]] {
+    // Get the indicies of the revealed statements from the transformed input document offset
+    // by the number of proof statements
     const numberOfProofStatements = proofStatements.length;
 
-    //Always reveal all the statements associated to the original proof
-    //these are always the first statements in the normalized form
-    const proofRevealIndicies = Array.from(
+    // Always reveal all the statements associated to the original proof
+    // these are always the first statements in the normalized form
+    const proofRevealedIndicies = Array.from(
       Array(numberOfProofStatements).keys()
     );
 
-    //Reveal the statements indicated from the reveal document
-    const documentRevealIndicies = revealedDocumentStatements.map((key) => {
+    // Reveal the statements indicated from the reveal document
+    const documentRevealedIndicies = revealedDocumentStatements.map((key) => {
       const idx = skolemizedDocumentStatements.findIndex(
         (e) => e.toString() === key.toString()
       );
@@ -420,25 +418,41 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     });
 
     // Check there is not a mismatch
-    if (documentRevealIndicies.length !== revealedDocumentStatements.length) {
+    if (documentRevealedIndicies.length !== revealedDocumentStatements.length) {
       throw new Error(
         "Some statements in the reveal document not found in original proof"
       );
     }
 
     // Combine all indicies to get the resulting list of revealed indicies
-    const BaseRevealIndicies = proofRevealIndicies.concat(
-      documentRevealIndicies
+    const revealedStatementIndicies = proofRevealedIndicies.concat(
+      documentRevealedIndicies
     );
 
-    // Expand indicies to fit termwise encoding
-    // e.g., [0, 2, 5] -> [0,1,2,3, 8,9,10,11, 20,21,22,23]
-    const revealIndicies = BaseRevealIndicies.flatMap((index) =>
+    // Calculate termwise indicies
+    const revealedTermIndicies = this.statementIndiciesToTermIndicies(
+      revealedStatementIndicies
+    );
+
+    return [revealedStatementIndicies, revealedTermIndicies];
+  }
+
+  /**
+   * Expand indicies to fit termwise encoding
+   *   e.g., [0,       2,         5          ]  (statementwise)
+   *      -> [0,1,2,3, 8,9,10,11, 20,21,22,23]  (termwise)
+   *
+   * @param {number[]} statementIndicies statementwise indicies
+   *
+   * @returns {number[]} termwise indicies
+   */
+  statementIndiciesToTermIndicies(statementIndicies: number[]): number[] {
+    const NUM_OF_TERMS_IN_STATEMENT = 4;
+    return statementIndicies.flatMap((index) =>
       [...Array(NUM_OF_TERMS_IN_STATEMENT).keys()].map(
         (i) => index * NUM_OF_TERMS_IN_STATEMENT + i
       )
     );
-    return revealIndicies;
   }
 
   statementToUint8(statementArray: Statement[][]): Uint8Array {
@@ -513,12 +527,13 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const nonce = givenNonce || randomBytes(50);
 
     const termsArray: Uint8Array[][] = [];
-    const revealIndiciesArray: number[][] = [];
+    const revealedStatementIndiciesArray: number[][] = [];
+    const revealedTermIndiciesArray: number[][] = [];
     const issuerPublicKeyArray: Buffer[] = [];
     const signatureArray: Buffer[] = [];
     const revealedDocuments: any = [];
     const derivedProofs: any = [];
-    const anonymizedRevealedStatementsArray: Statement[][] = [];
+    const revealedStatementsArray: Statement[][] = [];
 
     const equivs: Map<string, [string, [number, number][]]> = new Map(
       hiddenUris.map((uri) => [`<${uri}>`, [uuidv4(), []]])
@@ -560,17 +575,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       const { skolemizedDocument, skolemizedDocumentStatements } =
         await this.skolemize(documentStatements, docIndex);
 
-      // Reveal: extract revealed parts using JSON-LD Framing
-      const { revealedDocument } = await this.reveal(
-        skolemizedDocument,
-        revealDocument,
-        {
-          suite,
-          documentLoader,
-          expansionMap
-        }
-      );
-
       // Prepare an equivalence class for each blank node identifier
       const skolemizedDocumentTerms = skolemizedDocumentStatements.flatMap(
         (item: TermwiseStatement) => item.toTerms()
@@ -583,14 +587,24 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         equivs.set(skolemizedBnid, [uuidv4(), []]);
       });
 
+      // Reveal: extract revealed parts using JSON-LD Framing
+      const { revealedDocument: preRevealedDocument } = await this.reveal(
+        skolemizedDocument,
+        revealDocument,
+        {
+          suite,
+          documentLoader,
+          expansionMap
+        }
+      );
+
       // Prepare anonymizedStatements: N-Quads statements
       // where each specified URI and bnid is replaced by anonymous ID, i.e., urn:anon:<UUIDv4>
       const anonymizedStatements = skolemizedDocumentStatements.map(
         (s: TermwiseStatement) => anonymizer.anonymizeStatement(s)
       );
-      const anonymizedRevealedDocument =
-        anonymizer.anonymizeJsonld(revealedDocument);
-      revealedDocuments.push(anonymizedRevealedDocument);
+      const revealedDocument = anonymizer.anonymizeJsonld(preRevealedDocument);
+      revealedDocuments.push(revealedDocument);
 
       // Process multiple proofs in an input document
       let proofIndex = 0;
@@ -630,22 +644,28 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
 
         // Prepare anonymizedRevealedStatements: N-Quads revealed statements to be verified by verifier
         // where each specified URI and bnid is replaced by anonymous ID, i.e., urn:anon:<UUIDv4>
-        const anonymizedRevealedStatements =
-          await this.createVerifyDocumentData(anonymizedRevealedDocument, {
+        const revealedStatements = await this.createVerifyDocumentData(
+          revealedDocument,
+          {
             suite,
             documentLoader,
             expansionMap,
             skipProofCompaction
-          });
-        anonymizedRevealedStatementsArray.push(anonymizedRevealedStatements);
-
-        // Calculate reveal indicies
-        const revealIndicies = this.getIndicies(
-          anonymizedStatements,
-          anonymizedRevealedStatements,
-          proofStatements
+          }
         );
-        revealIndiciesArray.push(revealIndicies);
+        revealedStatementsArray.push(revealedStatements);
+
+        // Calculate revealed indicies
+        // - statement indicies: embedded in the derived proof to be passed to the Verifier;
+        // - term indicies: input to blsCreateProof to generate zkproof
+        const [revealedStatementIndicies, revealedTermIndicies] =
+          this.getIndicies(
+            anonymizedStatements,
+            revealedStatements,
+            proofStatements
+          );
+        revealedStatementIndiciesArray.push(revealedStatementIndicies);
+        revealedTermIndiciesArray.push(revealedTermIndicies);
 
         // Push each term index of hidden URIs that are not removed by revealing process (JSON-LD framing)
         // to equivalence class
@@ -653,7 +673,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           .concat(skolemizedDocumentStatements)
           .flatMap((item: TermwiseStatement) => item.toTerms());
         skolemizedTerms.forEach((term, termIndex) => {
-          if (equivs.has(term) && revealIndicies.includes(termIndex)) {
+          if (equivs.has(term) && revealedTermIndicies.includes(termIndex)) {
             const e = equivs.get(term) as [string, [number, number][]];
             e[1].push([proofIndex + proofIndexOffset[docIndex], termIndex]);
           }
@@ -698,6 +718,11 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         derivedProof.created = proof.created;
         // Set the nonce on the derived proof
         derivedProof.nonce = Buffer.from(nonce).toString("base64");
+        // Embed the revealed statement indicies into the head of proofValue
+        derivedProof.proofValue =
+          Buffer.from(JSON.stringify(revealedStatementIndicies)).toString(
+            "base64"
+          ) + ".";
         derivedProofs.push(derivedProof);
 
         proofIndex++;
@@ -712,7 +737,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
 
     // merge revealed statements into nonce (should be separated as claims?)
     const revealedStatementsByte = this.statementToUint8(
-      anonymizedRevealedStatementsArray
+      revealedStatementsArray
     );
     const mergedNonce = new Uint8Array(
       nonce.length + revealedStatementsByte.length
@@ -728,7 +753,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       ),
       messages: termsArray,
       nonce: mergedNonce,
-      revealed: revealIndiciesArray,
+      revealed: revealedTermIndiciesArray,
       equivs: equivsArray
     });
 
@@ -746,9 +771,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
             "invalid proofValue generated by blsCreateProofMulti"
           );
         }
-        derivedProof.proofValue = Buffer.from(derivedProofValue.value).toString(
-          "base64"
-        );
+        derivedProof.proofValue +=
+          Buffer.from(derivedProofValue).toString("base64");
         derivedProofsPerDoc.push(derivedProof);
       }
 
@@ -802,10 +826,11 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const { inputDocuments, documentLoader, expansionMap, purpose } = options;
 
     const messagesArray: Uint8Array[][] = [];
-    const proofArray: { value: Uint8Array }[] = [];
+    const proofArray: Uint8Array[] = [];
     const issuerPublicKeyArray: Uint8Array[] = [];
     const equivs: Map<string, [number, number][]> = new Map();
-    const documentStatementsArray: Statement[][] = [];
+    const revealedStatementsArray: Statement[][] = [];
+    const revealedTermIndiciesArray: number[][] = [];
 
     const anonymizer = new URIAnonymizer();
 
@@ -833,7 +858,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         }
 
         // Canonicalize document: get N-Quads from JSON-LD
-        const documentStatements: TermwiseStatement[] =
+        const revealedStatements: TermwiseStatement[] =
           await this.createVerifyDocumentData(document, {
             documentLoader,
             expansionMap
@@ -843,7 +868,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         let proofIndex = 0;
         for (const proof of proofs) {
           // keep document N-Quads statements per proof to calculate challenge hash later
-          documentStatementsArray.push(documentStatements);
+          revealedStatementsArray.push(revealedStatements);
 
           // TODO: handle the case of empty nonce
           if (proof.nonce !== previous_nonce && previous_nonce !== "") {
@@ -853,10 +878,16 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           }
           previous_nonce = proof.nonce;
 
-          proofArray.push({
-            value: new Uint8Array(Buffer.from(proof.proofValue, "base64"))
-          });
+          // Extract revealed indicies and zkproof from proofValue
+          const [revealedStatementIndiciesEncoded, proofValue] =
+            proof.proofValue.split(".");
+          const revealedStatementIndicies: number[] = JSON.parse(
+            Buffer.from(revealedStatementIndiciesEncoded, "base64").toString()
+          );
 
+          proofArray.push(new Uint8Array(Buffer.from(proofValue, "base64")));
+
+          // Revert proof.type from BbsTermwiseSignatureProof2021 to BbsTermwiseSignature2021 for verification
           proof.type = this.mappedDerivedProofType;
 
           // Canonicalize proof: get N-Quads from JSON-LD
@@ -866,10 +897,26 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
               expansionMap
             });
 
+          // obtain termwise indicies
+          const revealedTermIndicies = this.statementIndiciesToTermIndicies(
+            revealedStatementIndicies
+          ).sort((a, b) => a - b);
+          revealedTermIndiciesArray.push(revealedTermIndicies);
+
+          // Reorder statements
+          const statements = proofStatements.concat(revealedStatements);
+          const reorderedStatements = revealedStatementIndicies
+            .map<[number, TermwiseStatement]>((termIndex, origIndex) => [
+              termIndex,
+              statements[origIndex]
+            ])
+            .sort(([termIndexA], [termIndexB]) => termIndexA - termIndexB)
+            .map(([, statement]) => statement);
+
           // concat proof and document to be verified
-          const terms = proofStatements
-            .concat(documentStatements)
-            .flatMap((item: TermwiseStatement) => item.toTerms());
+          const terms = reorderedStatements.flatMap((item: TermwiseStatement) =>
+            item.toTerms()
+          );
 
           messagesArray.push(
             terms.map((term: string) => new Uint8Array(Buffer.from(term)))
@@ -882,10 +929,16 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
               if (equivs.has(found)) {
                 equivs
                   .get(found)
-                  ?.push([proofIndex + proofIndexOffset[docIndex], termIndex]);
+                  ?.push([
+                    proofIndex + proofIndexOffset[docIndex],
+                    revealedTermIndicies[termIndex]
+                  ]);
               } else {
                 equivs.set(found, [
-                  [proofIndex + proofIndexOffset[docIndex], termIndex]
+                  [
+                    proofIndex + proofIndexOffset[docIndex],
+                    revealedTermIndicies[termIndex]
+                  ]
                 ]);
               }
             }
@@ -928,18 +981,18 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         .sort()
         .map((e) => e[1]);
 
-      // merge document statements into nonce (should be separated as claims?)
-      const documentStatementsByte = this.statementToUint8(
-        documentStatementsArray
+      // merge revealed statements into nonce (should be separated as claims?)
+      const revealedStatementsByte = this.statementToUint8(
+        revealedStatementsArray
       );
       const nonce = new Uint8Array(
         Buffer.from(previous_nonce as string, "base64")
       );
       const mergedNonce = new Uint8Array(
-        nonce.length + documentStatementsByte.length
+        nonce.length + revealedStatementsByte.length
       );
       mergedNonce.set(nonce);
-      mergedNonce.set(documentStatementsByte, nonce.length);
+      mergedNonce.set(revealedStatementsByte, nonce.length);
 
       // Verify the proof
       const verified = await blsVerifyProofMulti({
@@ -947,6 +1000,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         publicKey: issuerPublicKeyArray,
         messages: messagesArray,
         nonce: mergedNonce,
+        revealed: revealedTermIndiciesArray,
         equivs: equivsArray
       });
 
