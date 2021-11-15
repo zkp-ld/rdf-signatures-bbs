@@ -1,5 +1,6 @@
 import {
   testRevealDocument,
+  testRevealAllDocument,
   testSignedDocument,
   customLoader,
   testSignedVcDocument,
@@ -28,10 +29,14 @@ describe("BbsTermwiseSignatureProof2021", () => {
   });
 
   it("should derive proof revealing all statements", async () => {
-    const result = await deriveProof(testSignedDocument, testRevealDocument, {
-      suite: new BbsTermwiseSignatureProof2021(),
-      documentLoader: customLoader
-    });
+    const result = await deriveProof(
+      testSignedDocument,
+      testRevealAllDocument,
+      {
+        suite: new BbsTermwiseSignatureProof2021(),
+        documentLoader: customLoader
+      }
+    );
     expect(result).toBeDefined();
   });
 
