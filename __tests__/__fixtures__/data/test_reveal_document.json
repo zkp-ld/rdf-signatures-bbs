@@ -1,6 +1,6 @@
 {
   "@context": [
-    "http://schema.org/",
+    "https://schema.org",
     "https://www.zkp-ld.org/bbs-termwise-2021.jsonld"
   ],
   "@type": "Person",
