@@ -842,7 +842,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       numberOfProofs.slice(0, i).reduce((a, b) => a + b, 0)
     );
 
-    let previous_nonce = "";
+    let previous_nonce: string | undefined;
 
     try {
       let docIndex = 0;
@@ -870,11 +870,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           // keep document N-Quads statements per proof to calculate challenge hash later
           revealedStatementsArray.push(revealedStatements);
 
-          // TODO: handle the case of empty nonce
-          if (proof.nonce !== previous_nonce && previous_nonce !== "") {
-            throw new Error(
-              "all the nonces in credentials must have the same values"
-            );
+          if (previous_nonce && proof.nonce !== previous_nonce) {
+            throw new Error("all of the nonces must have the same values");
           }
           previous_nonce = proof.nonce;
 
