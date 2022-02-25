@@ -14,33 +14,28 @@
 import { customLoader } from "./customDocumentLoader";
 
 import exampleBls12381KeyPair from "./data/exampleBls12381KeyPair.json";
+import exampleBls12381KeyPairJwk from "./data/exampleBls12381KeyPairJwk.json";
 import exampleEd25519KeyPair from "./data/did_example_b34ca6cd37bbf23_test.json";
 import testDocument from "./data/test_document.json";
 import testRevealDocument from "./data/test_reveal_document.json";
+import testRevealDocumentWithUnknownAttributes from "./data/test_reveal_document_with_unknown_attributes.json";
 import testSignedDocument from "./data/test_signed_document.json";
 import testSignedDocumentMultiProofs from "./data/test_signed_document_multi_proofs.json";
 import testSignedDocumentMultiDifProofs from "./data/test_signed_document_multi_dif_proofs.json";
-import testSignedDocumentMultiBadProofs from "./data/test_signed_document_multi_proofs_bad.json";
 import testSignedDocumentEd25519 from "./data/test_signed_document_ed25519.json";
-import testBadSignedDocument from "./data/test_bad_signed_document.json";
-import testBadSignedDocumentWithIncompatibleSuite from "./data/test_bad_signed_document_with_incompatible_suite.json";
-import testProofDocument from "./data/test_proof_document.json";
-import testPartialProofDocument from "./data/test_partial_proof_document.json";
-import testBadPartialProofDocument from "./data/test_bad_partial_proof_document.json";
-import testBadPartialProofDocumentWithIncompatibleSuite from "./data/test_bad_partial_proof_document_incompatible_suite.json";
 import testVcDocument from "./data/test_vc.json";
+import testVcDocumentJwk from "./data/test_vc_jwk.json";
 import testSignedVcDocument from "./data/test_signed_vc.json";
 import testSignedVcDocumentJwk from "./data/test_signed_vc_jwk.json";
 import testRevealVcDocument from "./data/test_vc_reveal_document.json";
+import testRevealVcDocumentInvalid from "./data/test_vc_reveal_document_invalid.json";
+import testRevealAllVcDocument from "./data/test_vc_reveal_all_document.json";
 import testRevealVcDocumentJwk from "./data/test_vc_reveal_document_jwk.json";
-import testPartialVcProof from "./data/test_partial_proof_vc_document.json";
 import testRevealAllDocument from "./data/test_reveal_all_document.json";
 import testNestedRevealDocument from "./data/test_nested_reveal_document.json";
 import testNestedRevealFullDocument from "./data/test_nested_reveal_full_document.json";
 import testNestedVcDocument from "./data/test_nested_vc_document.json";
 import testSignedNestedVcDocument from "./data/test_signed_nested_vc_document.json";
-import testProofNestedVcDocument from "./data/test_proof_nested_vc_document.json";
-import testPartialProofNestedVcDocument from "./data/test_partial_proof_nested_vc_document.json";
 import testAnonymousVcDocument from "./data/test_anonymous_vc.json";
 import testAnonymousVcComplexDocument from "./data/test_anonymous_vc_complex.json";
 import testRevealAnonymousVcDocument from "./data/test_anonymous_vc_reveal_document.json";
@@ -52,39 +47,41 @@ import expExampleBls12381KeyPair3 from "./data/exp_exampleBls12381KeyPair3.json"
 import expVCDocument from "./data/exp_vc.json";
 import expVCDocument2 from "./data/exp_vc2.json";
 import expVCDocument3 from "./data/exp_vc3.json";
+import expVCDocumentWithArray from "./data/exp_vc_with_array.json";
 import expRevealDocument from "./data/exp_reveal_document.json";
 import expRevealDocument2 from "./data/exp_reveal_document2.json";
 import expRevealDocument3 from "./data/exp_reveal_document3.json";
+import expVCDocumentForRangeProof from "./data/exp_vc_rangeproof.json";
+import expVCDocumentForRangeProof2 from "./data/exp_vc_rangeproof2.json";
+import expVCDocumentForRangeProofInvalid from "./data/exp_vc_rangeproof_invalid.json";
+import expRevealDocumentWithoutRangeProof from "./data/exp_reveal_document_rangeproof0.json";
+import expRevealDocumentForRangeProof from "./data/exp_reveal_document_rangeproof1.json";
+import expRevealDocumentForRangeProof2 from "./data/exp_reveal_document_rangeproof2.json";
 
 export {
   exampleBls12381KeyPair,
+  exampleBls12381KeyPairJwk,
   exampleEd25519KeyPair,
   testDocument,
   testRevealDocument,
+  testRevealDocumentWithUnknownAttributes,
   testRevealVcDocumentJwk,
   testSignedDocument,
   testSignedDocumentMultiProofs,
   testSignedDocumentMultiDifProofs,
-  testSignedDocumentMultiBadProofs,
   testSignedDocumentEd25519,
-  testProofDocument,
   testVcDocument,
+  testVcDocumentJwk,
   testRevealAllDocument,
-  testPartialVcProof,
   testSignedVcDocument,
   testSignedVcDocumentJwk,
   testRevealVcDocument,
-  testPartialProofDocument,
-  testBadPartialProofDocument,
-  testBadPartialProofDocumentWithIncompatibleSuite,
-  testBadSignedDocument,
-  testBadSignedDocumentWithIncompatibleSuite,
+  testRevealVcDocumentInvalid,
+  testRevealAllVcDocument,
   testNestedRevealDocument,
   testNestedRevealFullDocument,
   testNestedVcDocument,
   testSignedNestedVcDocument,
-  testProofNestedVcDocument,
-  testPartialProofNestedVcDocument,
   customLoader,
   testAnonymousVcDocument,
   testRevealAnonymousVcDocument,
@@ -95,9 +92,16 @@ export {
   expVCDocument,
   expVCDocument2,
   expVCDocument3,
+  expVCDocumentWithArray,
   expRevealDocument,
   expRevealDocument2,
   expRevealDocument3,
   testAnonymousVcComplexDocument,
-  testRevealAnonymousVcComplexDocument
+  testRevealAnonymousVcComplexDocument,
+  expVCDocumentForRangeProof,
+  expVCDocumentForRangeProof2,
+  expVCDocumentForRangeProofInvalid,
+  expRevealDocumentWithoutRangeProof,
+  expRevealDocumentForRangeProof,
+  expRevealDocumentForRangeProof2
 };

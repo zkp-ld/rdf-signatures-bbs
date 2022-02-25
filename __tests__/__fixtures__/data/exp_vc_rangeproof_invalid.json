@@ -4,18 +4,18 @@
     "https://zkp-ld.org/bbs-termwise-2021.jsonld",
     "https://schema.org"
   ],
-  "id": "http://example.org/credentials/abcd",
+  "id": "https://example.org/credentials/abcdefgh",
   "type": "VerifiableCredential",
-  "issuer": "did:example:issuer3",
+  "issuer": "did:example:issuer2",
   "issuanceDate": "2021-01-01T00:00:00Z",
   "expirationDate": "2022-01-01T00:00:00Z",
   "credentialSubject": {
-    "id": "did:example:area1",
+    "id": "https://example.org/area1",
     "type": "Place",
-    "name": "Area1",
-    "ownedBy": {
-      "id": "did:example:holder1"
-    },
-    "area": 300
+    "name": "Area 1",
+    "area": [
+      -1, 2147483647, -2147483647, 2147483648, -2147483648, 9007199254740991,
+      9007199254740992, 10000000000000000000000000
+    ]
   }
 }

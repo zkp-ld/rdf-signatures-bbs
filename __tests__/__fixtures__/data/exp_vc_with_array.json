@@ -15,8 +15,13 @@
     "givenName": "John",
     "familyName": "Smith",
     "birthDate": "1970-01-01",
-    "homeLocation": {
-      "id": "did:example:cityA"
-    }
+    "homeLocation": [
+      {
+        "id": "did:example:cityA"
+      },
+      {
+        "id": "did:example:cityB"
+      }
+    ]
   }
 }

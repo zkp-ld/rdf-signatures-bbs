@@ -4,15 +4,15 @@
     "https://zkp-ld.org/bbs-termwise-2021.jsonld",
     "https://schema.org"
   ],
-  "id": "http://example.org/credentials/9876",
+  "id": "https://example.org/credentials/abcdefgh",
   "type": "VerifiableCredential",
   "issuer": "did:example:issuer2",
-  "issuanceDate": "2021-09-01T00:00:00Z",
-  "expirationDate": "2022-09-01T00:00:00Z",
+  "issuanceDate": "2021-01-01T00:00:00Z",
+  "expirationDate": "2022-01-01T00:00:00Z",
   "credentialSubject": {
-    "id": "did:example:cityA",
+    "id": "https://example.org/area1",
     "type": "Place",
-    "name": "City A",
-    "maximumAttendeeCapacity": 10000
+    "name": "Area 1",
+    "area": 30000
   }
 }

@@ -11,8 +11,7 @@
  * limitations under the License.
  */
 
-import { Statement } from "./Statement";
-import { TermwiseStatement } from "src/TermwiseStatement";
+import { Statement } from "src/Statement";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CanonicalizeOptions {
@@ -45,65 +44,4 @@ export interface CanonicalizeResult {
    * proof statements (array of quads)
    */
   proofStatements: Statement[];
-}
-
-export interface TermwiseCanonicalizeResult {
-  /**
-   * document statements (array of quads)
-   */
-  documentStatements: TermwiseStatement[];
-  /**
-   * proof statements (array of quads)
-   */
-  proofStatements: TermwiseStatement[];
-}
-
-export interface SkolemizeResult {
-  /**
-   * Skolemized document (JSON-LD)
-   */
-  skolemizedDocument: string;
-  /**
-   * Skolemized document (array of quads)
-   */
-  skolemizedDocumentStatements: Statement[];
-}
-
-export interface TermwiseSkolemizeResult {
-  /**
-   * Skolemized document (JSON-LD)
-   */
-  skolemizedDocument: string;
-  /**
-   * Skolemized document (array of quads)
-   */
-  skolemizedDocumentStatements: TermwiseStatement[];
-}
-
-export interface RevealOptions {
-  /**
-   * The signature suite
-   */
-  readonly suite: any;
-  /**
-   * Optional custom document loader
-   */
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  documentLoader?: Function;
-  /**
-   * Optional expansion map
-   */
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  expansionMap?: Function;
-}
-
-export interface RevealResult {
-  /**
-   * Revealed document (JSON-LD)
-   */
-  revealedDocument: any;
-  /**
-   * Revealed document statements (array of quads)
-   */
-  revealedDocumentStatements: Statement[];
 }

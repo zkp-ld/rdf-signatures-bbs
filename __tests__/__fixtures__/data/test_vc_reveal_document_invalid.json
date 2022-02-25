@@ -7,7 +7,7 @@
   "id": "https://issuer.oidp.uscis.gov/credentials/83627465",
   "type": ["VerifiableCredential", "PermanentResidentCard"],
   "@explicit": true,
-  "issuer": "did:example:489398593",
+  "issuer": "INVALID: should have been URI instead of string",
   "identifier": "83627465",
   "name": "Permanent Resident Card",
   "description": "Government of Example Permanent Resident Card.",

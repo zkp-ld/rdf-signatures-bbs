@@ -972,19 +972,19 @@
     "@typescript-eslint/types" "4.31.2"
     eslint-visitor-keys "^2.0.0"
 
-"@yamdan/bbs-signatures@0.6.8":
-  version "0.6.8"
-  resolved "https://registry.yarnpkg.com/@yamdan/bbs-signatures/-/bbs-signatures-0.6.8.tgz#3223cce7ac2b4888126ce88ab2e05e6f6da944bb"
-  integrity sha512-lbDSlnJvl8nq5z5uJG4d21H+Jfe7LrIUBrwTiHQ6bDPCObzBs+5NDwQYHaXiLRjnwq32ITqs7YDxWQencLqyIw==
+"@yamdan/bbs-signatures@0.6.12":
+  version "0.6.12"
+  resolved "https://registry.yarnpkg.com/@yamdan/bbs-signatures/-/bbs-signatures-0.6.12.tgz#73ba065aa9c972b3f7a1fc0e0bc547428a91870c"
+  integrity sha512-iBDyRgy29j4QRYbOHYI1qtNMSsA7/nFXmyVpowSkTMQqtp3suvE29TiOoZ6zLqoAXpY39vjba2Oyhw+bkOIU5w==
   dependencies:
     "@stablelib/random" "1.0.1"
 
-"@yamdan/bls12381-key-pair@0.7.6":
-  version "0.7.6"
-  resolved "https://registry.yarnpkg.com/@yamdan/bls12381-key-pair/-/bls12381-key-pair-0.7.6.tgz#d52882a94e39fa81946847ed6b0277d35f5b8d67"
-  integrity sha512-4Mqr3yGLDdcTbN7sq5iBP4v+tOwqJ9xglD9OrUI81A4eJjXtgErQKibaF9tW4bn4S+MCOp5jF8/UJ7diV8ym0A==
+"@yamdan/bls12381-key-pair@0.7.12":
+  version "0.7.12"
+  resolved "https://registry.yarnpkg.com/@yamdan/bls12381-key-pair/-/bls12381-key-pair-0.7.12.tgz#39e217c4abaf3f5bfe0713be24e32195f5f3b00e"
+  integrity sha512-ylmx2tDdnYH4dw9N5N1iQDXkzYZ7ZYhPvhEkiUAPkB7Qh30lq/tERgnnyvqObncveNO5aFsnoon/L5kI3LqEaw==
   dependencies:
-    "@yamdan/bbs-signatures" "0.6.8"
+    "@yamdan/bbs-signatures" "0.6.12"
     bs58 "4.0.1"
     rfc4648 "1.5.0"
 

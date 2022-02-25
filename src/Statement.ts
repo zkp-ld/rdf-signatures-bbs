@@ -8,36 +8,26 @@
 
 import rdfCanonize from "rdf-canonize";
 const NQuads = rdfCanonize.NQuads;
-import { Statement } from "./types";
 
 const RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 const RDF_LANGSTRING = RDF + "langString";
-const XSD_STRING = "http://www.w3.org/2001/XMLSchema#string";
-const TYPE_NAMED_NODE = "NamedNode";
-const TYPE_BLANK_NODE = "BlankNode";
+export const XSD_STRING = "http://www.w3.org/2001/XMLSchema#string";
+export const XSD_INTEGER = "http://www.w3.org/2001/XMLSchema#integer";
+export const TYPE_NAMED_NODE = "NamedNode";
+export const TYPE_BLANK_NODE = "BlankNode";
+const U8_STRING = 0;
+const U8_INTEGER = 1;
 
-type Quad = {
-  subject: {
-    termType: string;
-    value: string;
-  };
-  predicate: {
-    termType: string;
-    value: string;
-  };
-  object: {
-    termType: string;
-    value: string;
-    datatype?: {
-      termType: string;
-      value: string;
-    };
-    language?: string;
-  };
-  graph?: {
-    termType: string;
-    value: string;
-  };
+export type RDFTerm = {
+  termType: string;
+  value: string;
+};
+
+export type RDFObjectTerm = {
+  termType: string;
+  value: string;
+  datatype?: RDFTerm;
+  language?: string;
 };
 
 /**
@@ -60,34 +50,60 @@ const _escape = (s: string): string => {
   });
 };
 
-export class TermwiseStatement implements Statement {
-  private readonly buffer: Quad;
+export class Statement {
+  subject: RDFTerm;
+  predicate: RDFTerm;
+  object: RDFObjectTerm;
+  graph: RDFTerm;
 
-  constructor(terms: string);
-  constructor(terms: Quad);
-  constructor(terms: string | Quad) {
-    if (typeof terms === "string") {
+  constructor(
+    terms?: string,
+    subject?: RDFTerm,
+    predicate?: RDFTerm,
+    object?: RDFObjectTerm,
+    graph?: RDFTerm
+  ) {
+    if (terms) {
       const rdfStatement = NQuads.parse(terms);
       if (rdfStatement.length < 1) {
         throw Error(
           "Cannot construct TermwiseStatement instance due to incorrect input"
         );
       }
-      this.buffer = rdfStatement[0];
+      const statement = rdfStatement[0];
+      this.subject = statement.subject;
+      this.predicate = statement.predicate;
+      this.object = statement.object;
+      this.graph = statement.graph;
+    } else if (subject && predicate && object && graph) {
+      this.subject = { ...subject };
+      this.predicate = { ...predicate };
+      this.object = { ...object };
+      if (object.datatype) {
+        this.object.datatype = { ...object.datatype };
+      }
+      this.graph = { ...graph };
     } else {
-      this.buffer = terms;
+      throw Error(
+        "Either string or (subject, predicate, object, graph) must be given to Statement constructor"
+      );
     }
   }
 
   toString(): string {
-    return NQuads.serializeQuad(this.buffer);
+    return NQuads.serializeQuad({
+      subject: this.subject,
+      predicate: this.predicate,
+      object: this.object,
+      graph: this.graph
+    });
   }
 
   toTerms(): [string, string, string, string] {
-    const s = this.buffer.subject;
-    const p = this.buffer.predicate;
-    const o = this.buffer.object;
-    const g = this.buffer.graph;
+    const s = this.subject;
+    const p = this.predicate;
+    const o = this.object;
+    const g = this.graph;
 
     // subject can only be NamedNode or BlankNode
     const sOut = s.termType === TYPE_NAMED_NODE ? `<${s.value}>` : `${s.value}`;
@@ -125,10 +141,33 @@ export class TermwiseStatement implements Statement {
   }
 
   serialize(): Uint8Array[] {
-    return this.toTerms().map((term) => new Uint8Array(Buffer.from(term)));
+    return this.toTerms().map((term) => {
+      // integer (32-bit positive)
+      if (term.endsWith(`"^^<${XSD_INTEGER}>`)) {
+        const val = term.slice(1, -`"^^<${XSD_INTEGER}>`.length);
+        if (val.match(/[1-9]\d*/)) {
+          const num = parseInt(val);
+          if (Number.isSafeInteger(num) && Math.abs(num) < 2 ** 31) {
+            return Uint8Array.of(
+              U8_INTEGER, // shows that this array encodes 32-bit integer (big endian)
+              (num & 0xff000000) >> 24,
+              (num & 0x00ff0000) >> 16,
+              (num & 0x0000ff00) >> 8,
+              (num & 0x000000ff) >> 0
+            );
+          }
+        }
+      }
+
+      // string
+      return new Uint8Array([
+        U8_STRING, // shows that this array encodes string
+        ...Buffer.from(term)
+      ]);
+    });
   }
 
-  skolemize(auxilliaryIndex?: number): TermwiseStatement {
+  skolemize(auxilliaryIndex?: number): Statement {
     const index = auxilliaryIndex !== undefined ? `${auxilliaryIndex}` : "";
 
     const _skolemize = (from: {
@@ -148,15 +187,13 @@ export class TermwiseStatement implements Statement {
       return to;
     };
 
-    // deep copy
-    const out: Quad = JSON.parse(JSON.stringify(this.buffer));
-    out.subject = _skolemize(out.subject);
-    out.object = { ...out.object, ..._skolemize(out.object) };
-    if (out.graph) {
-      out.graph = _skolemize(out.graph);
-    }
-
-    return new TermwiseStatement(out);
+    return new Statement(
+      undefined,
+      _skolemize(this.subject),
+      this.predicate,
+      { ...this.object, ..._skolemize(this.object) },
+      this.graph ? _skolemize(this.graph) : undefined
+    );
   }
 
   /**
@@ -164,7 +201,7 @@ export class TermwiseStatement implements Statement {
    * back into actual blank node identifiers
    * e.g., <urn:bnid:_:c14n0> => _:c14n0
    */
-  deskolemize(): TermwiseStatement {
+  deskolemize(): Statement {
     const _deskolemize = (from: {
       value: string;
       termType: string;
@@ -179,25 +216,23 @@ export class TermwiseStatement implements Statement {
       return to;
     };
 
-    // deep copy
-    const out: Quad = JSON.parse(JSON.stringify(this.buffer));
-    out.subject = _deskolemize(out.subject);
-    out.object = { ...out.object, ..._deskolemize(out.object) };
-    if (out.graph) {
-      out.graph = _deskolemize(out.graph);
-    }
-
-    return new TermwiseStatement(out);
+    return new Statement(
+      undefined,
+      _deskolemize(this.subject),
+      this.predicate,
+      { ...this.object, ..._deskolemize(this.object) },
+      this.graph ? _deskolemize(this.graph) : undefined
+    );
   }
 
-  replace(from: string, to: string): TermwiseStatement {
-    // deep copy
-    const replaced: Quad = JSON.parse(JSON.stringify(this.buffer));
-
-    const s = replaced.subject;
-    const p = replaced.predicate;
-    const o = replaced.object;
-    const g = replaced.graph;
+  replace(from: string, to: string): Statement {
+    const s = { ...this.subject };
+    const p = { ...this.predicate };
+    const o = { ...this.object };
+    if (this.object.datatype) {
+      o.datatype = { ...this.object.datatype };
+    }
+    const g = { ...this.graph };
 
     s.value = s.value.replace(from, to);
     p.value = p.value.replace(from, to);
@@ -206,6 +241,6 @@ export class TermwiseStatement implements Statement {
       g.value = g.value.replace(from, to);
     }
 
-    return new TermwiseStatement(replaced);
+    return new Statement(undefined, s, p, o, g);
   }
 }

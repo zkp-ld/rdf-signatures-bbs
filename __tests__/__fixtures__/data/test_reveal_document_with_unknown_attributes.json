@@ -6,5 +6,6 @@
   "@type": "Person",
   "@explicit": true,
   "firstName": "Jane",
-  "lastName": "Does"
+  "lastName": "FOOBAR",
+  "foobar": {}
 }

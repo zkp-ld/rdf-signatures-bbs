@@ -14,21 +14,21 @@ import {
   CreateVerifyDataOptions,
   CanonizeOptions,
   CanonicalizeOptions,
-  RevealOptions,
-  RevealResult,
-  Statement,
-  TermwiseCanonicalizeResult,
+  CanonicalizeResult,
   DeriveProofMultiOptions,
   VerifyProofMultiOptions,
   VerifyProofMultiResult,
-  TermwiseSkolemizeResult,
   DeriveProofOptions,
   VerifyProofOptions,
   VerifyProofResult
 } from "./types";
 import { BbsTermwiseSignature2021 } from "./BbsTermwiseSignature2021";
-import { TermwiseStatement } from "./TermwiseStatement";
-import { SECURITY_CONTEXT_URLS } from "./utilities";
+import { Statement, TYPE_NAMED_NODE, XSD_INTEGER } from "./Statement";
+import {
+  SECURITY_CONTEXT_URLS,
+  NUM_OF_TERMS_IN_STATEMENT,
+  KEY_FOR_RANGEPROOF
+} from "./utilities";
 
 class URIAnonymizer {
   private prefix = "urn:anon:";
@@ -47,7 +47,7 @@ class URIAnonymizer {
   anonymizeJsonld(doc: any): any {
     const anonymizeDocument = (doc: any): void => {
       for (const [k, v] of Object.entries(doc)) {
-        if (typeof v === "object") {
+        if (v != null && typeof v === "object") {
           anonymizeDocument(v);
         } else if (typeof v === "string") {
           const anid = this.equivs.get(`<${v}>`);
@@ -96,13 +96,12 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     this.key = key;
     this.useNativeCanonize = useNativeCanonize;
     this.Suite = BbsTermwiseSignature2021;
-    this.Statement = TermwiseStatement;
   }
 
   // ported from
   // https://github.com/transmute-industries/verifiable-data/blob/main/packages/bbs-bls12381-signature-2020/src/BbsBlsSignatureProof2020.ts
   ensureSuiteContext({ document }: any): void {
-    const contextUrl = "https://www.zkp-ld.org/bbs-termwise-2021.jsonld";
+    const contextUrl = "https://zkp-ld.org/bbs-termwise-2021.jsonld";
     if (
       document["@context"] === contextUrl ||
       (Array.isArray(document["@context"]) &&
@@ -169,25 +168,25 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
   /**
    * @param nQuads {string} canonized RDF N-Quads as a string
    *
-   * @returns {TermwiseStatement[]} an array of statements
+   * @returns {Statement[]} an array of statements
    */
-  getStatements(nQuads: string): TermwiseStatement[] {
+  getStatements(nQuads: string): Statement[] {
     return nQuads
       .split("\n")
       .filter((_) => _.length > 0)
-      .map((s: string) => new this.Statement(s));
+      .map((s: string) => new Statement(s));
   }
 
   /**
    * @param proof to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<TermwiseStatement[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyProofData(
     proof: any,
     { documentLoader, expansionMap }: any
-  ): Promise<TermwiseStatement[]> {
+  ): Promise<Statement[]> {
     const c14nProofOptions = await this.canonizeProof(proof, {
       documentLoader,
       expansionMap
@@ -200,12 +199,12 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
    * @param document to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<TermwiseStatement[]>}.
+   * @returns {Promise<Statement[]>}.
    */
   async createVerifyDocumentData(
     document: any,
     { documentLoader, expansionMap }: any
-  ): Promise<TermwiseStatement[]> {
+  ): Promise<Statement[]> {
     const c14nDocument = await this.canonize(document, {
       documentLoader,
       expansionMap
@@ -271,18 +270,18 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
    * @param proof to canonicalize
    * @param options to create verify data
    *
-   * @returns {Promise<TermwiseCanonicalizeResult>} canonicalized statements
+   * @returns {Promise<CanonicalizeResult>} canonicalized statements
    */
   async canonicalize(
     document: string,
     proof: string,
     options: CanonicalizeOptions
-  ): Promise<TermwiseCanonicalizeResult> {
+  ): Promise<CanonicalizeResult> {
     const { suite, documentLoader, expansionMap, skipProofCompaction } =
       options;
 
     // Get the input document statements
-    const documentStatements: TermwiseStatement[] =
+    const documentStatements: Statement[] =
       await suite.createVerifyDocumentData(document, {
         documentLoader,
         expansionMap,
@@ -290,151 +289,46 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       });
 
     // Get the proof statements
-    const proofStatements: TermwiseStatement[] =
-      await suite.createVerifyProofData(proof, {
+    const proofStatements: Statement[] = await suite.createVerifyProofData(
+      proof,
+      {
         documentLoader,
         expansionMap,
         compactProof: !skipProofCompaction
-      });
+      }
+    );
 
     return { documentStatements, proofStatements };
   }
 
   /**
-   * Name all the blank nodes
-   *
-   * @param documentStatements to skolemize
-   *
-   * @returns {Promise<TermwiseSkolemizeResult>} skolemized JSON-LD document and statements
-   */
-  async skolemize(
-    documentStatements: TermwiseStatement[],
-    auxilliaryIndex?: number
-  ): Promise<TermwiseSkolemizeResult> {
-    // Transform any blank node identifiers for the input
-    // document statements into actual node identifiers
-    // e.g., _:c14n0 => <urn:bnid:_:c14n0>
-    const skolemizedDocumentStatements = documentStatements.map((element) =>
-      element.skolemize(auxilliaryIndex)
-    );
-
-    // Transform the resulting RDF statements back into JSON-LD
-    const skolemizedDocument: string = await jsonld.fromRDF(
-      skolemizedDocumentStatements.join("\n")
-    );
-
-    return { skolemizedDocument, skolemizedDocumentStatements };
-  }
-
-  /**
-   * Unname all the blank nodes
-   *
-   * @param documentStatements to deskolemize
-   *
-   * @returns {Promise<DeskolemizeResult>} deskolemized JSON-LD document and statements
-   */
-  async deskolemize(
-    skolemizedDocumentStatements: TermwiseStatement[]
-  ): Promise<TermwiseStatement[]> {
-    // Transform the blank node identifier placeholders for the document statements
-    // back into actual blank node identifiers
-    // e.g., <urn:bnid:_:c14n0> => _:c14n0
-    const documentStatements = skolemizedDocumentStatements.map((element) =>
-      element.deskolemize()
-    );
-    return documentStatements;
-  }
-
-  /**
-   * Extract revealed parts using JSON-LD Framing
-   *
-   * @param skolemizedDocument JSON-LD document
-   * @param revealDocument JSON-LD frame
-   * @param options for framing and createVerifyData
-   *
-   * @returns {Promise<RevealResult>} revealed JSON-LD document and statements
-   */
-  async reveal(
-    skolemizedDocument: string,
-    revealDocument: string,
-    options: RevealOptions
-  ): Promise<RevealResult> {
-    const { suite, documentLoader, expansionMap } = options;
-
-    // Frame the result to create the reveal document result
-    const revealedDocument = await jsonld.frame(
-      skolemizedDocument,
-      revealDocument,
-      { documentLoader }
-    );
-
-    // Canonicalize the resulting reveal document
-    const revealedDocumentStatements = await suite.createVerifyDocumentData(
-      revealedDocument,
-      {
-        documentLoader,
-        expansionMap
-      }
-    );
-
-    return { revealedDocument, revealedDocumentStatements };
-  }
-
-  /**
    * Calculate revealed indicies
    *
-   * @param skolemizedDocumentStatements full document statements
-   * @param revealedDocumentStatements revealed document statements
-   * @param proofStatements proof statements
+   * @param fullStatements full document statements
+   * @param partialStatements revealed document statements
    *
-   * @returns {[number[], number[]]} a pair of revealed statementwise indicies and revealed termwise indicies
+   * @returns {number[]} revealed statementwise indicies
    */
   getIndicies(
-    skolemizedDocumentStatements: Statement[],
-    revealedDocumentStatements: Statement[],
-    proofStatements: Statement[]
-  ): [number[], number[]] {
-    // Get the indicies of the revealed statements from the transformed input document offset
-    // by the number of proof statements
-    const numberOfProofStatements = proofStatements.length;
-
-    // Always reveal all the statements associated to the original proof
-    // these are always the first statements in the normalized form
-    const proofRevealedIndicies = Array.from(
-      Array(numberOfProofStatements).keys()
-    );
-
+    fullStatements: Statement[],
+    partialStatements: Statement[]
+  ): number[] {
     // Reveal the statements indicated from the reveal document
-    const documentRevealedIndicies = revealedDocumentStatements.map((key) => {
-      const idx = skolemizedDocumentStatements.findIndex(
-        (e) => e.toString() === key.toString()
-      );
-      if (idx === -1) {
-        throw new Error(
-          "Some statements in the reveal document not found in original proof"
-        );
-      }
-      return idx + numberOfProofStatements;
-    });
-
-    // Check there is not a mismatch
-    if (documentRevealedIndicies.length !== revealedDocumentStatements.length) {
+    const documentRevealedIndicies = partialStatements.map((x) =>
+      fullStatements.findIndex((y) => x.toString() === y.toString())
+    );
+    if (documentRevealedIndicies.includes(-1)) {
       throw new Error(
         "Some statements in the reveal document not found in original proof"
       );
     }
-
-    // Combine all indicies to get the resulting list of revealed indicies
-    const revealedStatementIndicies = proofRevealedIndicies.concat(
-      documentRevealedIndicies
-    );
-
-    // Calculate termwise indicies
-    const revealedTermIndicies = this.statementIndiciesToTermIndicies(
-      revealedStatementIndicies
-    );
-
-    return [revealedStatementIndicies, revealedTermIndicies];
+    // Check there is not a mismatch
+    if (documentRevealedIndicies.length !== partialStatements.length) {
+      throw new Error(
+        "Some statements in the reveal document not found in original proof"
+      );
+    }
+    return documentRevealedIndicies;
   }
 
   /**
@@ -447,7 +341,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
    * @returns {number[]} termwise indicies
    */
   statementIndiciesToTermIndicies(statementIndicies: number[]): number[] {
-    const NUM_OF_TERMS_IN_STATEMENT = 4;
     return statementIndicies.flatMap((index) =>
       [...Array(NUM_OF_TERMS_IN_STATEMENT).keys()].map(
         (i) => index * NUM_OF_TERMS_IN_STATEMENT + i
@@ -465,6 +358,206 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           .join("")
       )
     );
+  }
+
+  /**
+   * Identify JSON paths to range indicator in reveal document (JSON-LD frame) such that:
+   *   [
+   *     [ "https://www.w3.org/2018/credentials#credentialSubject",
+   *       "http://schema.org/containsPlace",
+   *       "http://schema.org/maximumAttendeeCapacity",
+   *       "", 1000, 5000, "http://example.org/townA2" ],
+   *     [ "https://www.w3.org/2018/credentials#credentialSubject",
+   *       "http://schema.org/maximumAttendeeCapacity",
+   *       "", 4000, 6000, "" ]
+   *   ]
+   *
+   * @param frame expanded JSON-LD frame
+   * @param path initial path
+   * @param parentID "@id" in upper layer if any
+   *
+   * @returns {(string | number)[][]} JSON paths to range indicator in reveal document (JSON-LD frame)
+   */
+  getRangePaths(
+    frame: any,
+    path: (string | number)[] = [],
+    parentID = ""
+  ): (string | number)[][] {
+    const res: (string | number)[][] = [];
+
+    if (!Array.isArray(frame)) return [];
+
+    for (let i = 0; i < frame.length; i++) {
+      if (typeof frame[i] !== "object") continue;
+
+      const currentID = "@id" in frame[i] ? frame[i]["@id"] : "";
+
+      for (const [k, v] of Object.entries(frame[i])) {
+        if (k === KEY_FOR_RANGEPROOF) {
+          if (!Array.isArray(v)) return [];
+          // add delimiter to path
+          path.push("");
+          // add min and max to path
+          for (const rv of v) {
+            path.push(rv["@value"]);
+          }
+          // add parent @id to path
+          path.push(parentID);
+          // add path to response
+          res.push(path);
+        } else if (Array.isArray(v)) {
+          res.push(...this.getRangePaths(v, path.concat(k), currentID));
+        }
+      }
+    }
+
+    return res;
+  }
+
+  /**
+   * Overwrite range proof indicators to the revealed document to be shown to the verifier
+   *
+   * @param doc expanded JSON-LD revealed document to be overwritten
+   * @param path path to range proof indicators calculated by getRangePaths()
+   */
+  updateDocWithRange(doc: any, path: (string | number)[]): void {
+    if (!Array.isArray(doc) || path[0] === "") return;
+
+    for (let i = 0; i < doc.length; i++) {
+      if (typeof doc[i] !== "object") continue;
+
+      for (const [j, v] of Object.entries(doc[i])) {
+        if (j === path[0]) {
+          if (!Array.isArray(v)) return;
+
+          if (path[1] === "") {
+            // overwrite a rangeproof part of the revealed document
+            for (let k = 0; k < doc[i][j].length; k++) {
+              doc[i][j][k] = {
+                [KEY_FOR_RANGEPROOF]: [
+                  { "@value": path[2] },
+                  { "@value": path[3] }
+                ]
+              };
+            }
+          } else {
+            this.updateDocWithRange(v, path.slice(1));
+          }
+        }
+      }
+    }
+  }
+
+  compactRange(doc: any): void {
+    if (!Array.isArray(doc)) return;
+
+    for (let i = 0; i < doc.length; i++) {
+      if (typeof doc[i] !== "object") continue;
+
+      for (const [k, v] of Object.entries(doc[i])) {
+        if (k === KEY_FOR_RANGEPROOF) {
+          if (!Array.isArray(v)) return;
+          // overwrite a rangeproof part of the revealed document
+          doc[i]["@id"] = `${KEY_FOR_RANGEPROOF}${JSON.stringify(
+            v.map((vv) => vv["@value"])
+          )}`;
+          delete doc[i][KEY_FOR_RANGEPROOF];
+        } else {
+          if (Array.isArray(v)) this.compactRange(v);
+        }
+      }
+    }
+  }
+
+  /**
+   * Identify term indicies and range to be range-proved
+   *
+   * @param paths paths to range proof indicators in JSON-LD frame
+   * @param anonymizedDocument JSON-LD document
+   * @param anonymizedStatements N-Quad statements
+   * @param suite
+   * @param documentLoader
+   * @param expansionMap
+   *
+   * @returns {Promise<[number, number, number][]>} term-index, min, max to be applied to range proofs
+   */
+  async getRangeProofIndicies(
+    paths: (string | number)[][],
+    anonymizedStatements: Statement[],
+    suite: any,
+    documentLoader: any,
+    expansionMap: any
+  ): Promise<[number, number, number][]> {
+    const pathToFrame = (
+      path: (string | number)[]
+    ): [any, string, [number, number]] => {
+      const frame: any = {
+        "@explicit": true
+      };
+      let pred: string;
+      let range: [number, number];
+      if (path[1] === "") {
+        if (
+          typeof path[0] !== "string" ||
+          typeof path[2] !== "number" ||
+          typeof path[3] !== "number" ||
+          typeof path[4] !== "string"
+        ) {
+          throw new Error("invalid reveal document");
+        }
+        frame[path[0]] = {};
+        pred = path[0];
+        range = [path[2], path[3]];
+        if (path[4] !== "") frame["@id"] = path[4];
+      } else {
+        [frame[path[0]], pred, range] = pathToFrame(path.slice(1));
+      }
+      return [frame, pred, range];
+    };
+
+    // construct JSON-LD frames to extract each range-proof part
+    const frames = paths.map((path) => pathToFrame(path));
+
+    // reconstruct JSON-LD document for framing
+    const anonymizedDocument: string = await jsonld.fromRDF(
+      anonymizedStatements.join("\n")
+    );
+
+    // extract statements corresponding to range-proof parts using above JSON-LD frames
+    return (
+      await Promise.all(
+        frames.map(
+          async ([frame, pred, range]): Promise<[number, number, number][]> => {
+            // Frame the result to create the reveal document result
+            const revealedDocument = await jsonld.frame(
+              anonymizedDocument,
+              frame,
+              { documentLoader }
+            );
+
+            // Canonicalize the resulting reveal document
+            const statements: Statement[] =
+              await suite.createVerifyDocumentData(revealedDocument, {
+                documentLoader,
+                expansionMap
+              });
+
+            const statementIndicies = this.getIndicies(
+              anonymizedStatements,
+              statements
+                .filter((s) => s.predicate.value === pred)
+                .filter((s) => s.object.datatype?.value === XSD_INTEGER)
+            );
+
+            return statementIndicies.map((idx) => [
+              idx * NUM_OF_TERMS_IN_STATEMENT + 2, // get object term index from statement index
+              range[0], // min
+              range[1] // max
+            ]);
+          }
+        )
+      )
+    ).flat();
   }
 
   /**
@@ -527,13 +620,14 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const nonce = givenNonce || randomBytes(50);
 
     const termsArray: Uint8Array[][] = [];
-    const revealedStatementIndiciesArray: number[][] = [];
+    const revealedIndiciesArray: number[][] = [];
     const revealedTermIndiciesArray: number[][] = [];
     const issuerPublicKeyArray: Buffer[] = [];
     const signatureArray: Buffer[] = [];
     const revealedDocuments: any = [];
     const derivedProofs: any = [];
     const revealedStatementsArray: Statement[][] = [];
+    const rangeProofIndiciesArray: [number, number, number][][] = [];
 
     const equivs: Map<string, [string, [number, number][]]> = new Map(
       hiddenUris.map((uri) => [`<${uri}>`, [uuidv4(), []]])
@@ -561,52 +655,110 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       // Initialize the signature suite
       const suite = new this.Suite();
 
-      // Canonicalize document: get N-Quads from JSON-LD
-      const documentStatements: TermwiseStatement[] =
+      // Canonicalize: get N-Quads from JSON-LD
+      const documentStatements: Statement[] =
         await suite.createVerifyDocumentData(document, {
           documentLoader,
           expansionMap,
           compactProof: !skipProofCompaction
         });
 
-      // Skolemize: name all the blank nodes
+      // Skolemize: transform any blank node identifiers for the input
+      // document statements into actual node identifiers
       // e.g., _:c14n0 -> urn:bnid:<docIndex>:_:c14n0
       // where <docIndex> corresponds to the index of document in inputDocuments array
-      const { skolemizedDocument, skolemizedDocumentStatements } =
-        await this.skolemize(documentStatements, docIndex);
-
-      // Prepare an equivalence class for each blank node identifier
-      const skolemizedDocumentTerms = skolemizedDocumentStatements.flatMap(
-        (item: TermwiseStatement) => item.toTerms()
+      const skolemizedStatements = documentStatements.map((statement) =>
+        statement.skolemize(docIndex)
       );
+      const skolemizedDocument: string = await jsonld.fromRDF(
+        skolemizedStatements.join("\n")
+      );
+
+      // Prepare an equivalence class (equivs) for each blank node identifier
       new Set(
-        skolemizedDocumentTerms.filter((term) =>
-          term.match(/^<urn:bnid:[0-9]+:_:c14n[0-9]+>$/)
-        )
+        skolemizedStatements
+          .flatMap((item: Statement) => item.toTerms())
+          .filter((term) => term.match(/^<urn:bnid:[0-9]+:_:c14n[0-9]+>$/))
       ).forEach((skolemizedBnid) => {
         equivs.set(skolemizedBnid, [uuidv4(), []]);
       });
 
       // Reveal: extract revealed parts using JSON-LD Framing
-      const { revealedDocument: preRevealedDocument } = await this.reveal(
-        skolemizedDocument,
-        revealDocument,
+      const expandedRevealedDocument = await jsonld.expand(
+        anonymizer.anonymizeJsonld(
+          await jsonld.frame(skolemizedDocument, revealDocument, {
+            documentLoader
+          })
+        ),
+        {
+          documentLoader
+        }
+      );
+      const pathsToRanges = this.getRangePaths(
+        await jsonld.expand(revealDocument, {
+          documentLoader
+        })
+      );
+      if (pathsToRanges.length > 0) {
+        pathsToRanges.map((path) =>
+          this.updateDocWithRange(expandedRevealedDocument, path)
+        );
+      }
+      const revealedDocument = await jsonld.compact(
+        expandedRevealedDocument,
+        revealDocument["@context"],
+        {
+          documentLoader,
+          expansionMap,
+          compactToRelative: false
+        }
+      );
+      revealedDocuments.push(revealedDocument);
+
+      // Prepare anonymized statements
+      const anonymizedStatements = skolemizedStatements.map((statement) =>
+        anonymizer.anonymizeStatement(statement)
+      );
+
+      // Get range-proved term indicies
+      const rangeProofIndicies = await this.getRangeProofIndicies(
+        pathsToRanges,
+        anonymizedStatements,
+        suite,
+        documentLoader,
+        expansionMap
+      );
+
+      // Update anonymized statements using range proof indicators
+      for (const [idx, min, max] of rangeProofIndicies) {
+        const statementIdx = (idx - 2) / NUM_OF_TERMS_IN_STATEMENT;
+        anonymizedStatements[
+          statementIdx
+        ].object.value = `${KEY_FOR_RANGEPROOF}${JSON.stringify([min, max])}`;
+        anonymizedStatements[statementIdx].object.termType = TYPE_NAMED_NODE;
+      }
+
+      // Prepare revealed statements: N-Quads revealed statements to be verified by verifier
+      // where each specified URI and bnid is replaced by anonymous ID, i.e., urn:anon:<UUIDv4>
+      this.compactRange(expandedRevealedDocument); // update
+      const revealedStatements = await this.createVerifyDocumentData(
+        expandedRevealedDocument,
         {
           suite,
           documentLoader,
-          expansionMap
+          expansionMap,
+          skipProofCompaction
         }
       );
+      revealedStatementsArray.push(revealedStatements); // for challenge hash
 
-      // Prepare anonymizedStatements: N-Quads statements
-      // where each specified URI and bnid is replaced by anonymous ID, i.e., urn:anon:<UUIDv4>
-      const anonymizedStatements = skolemizedDocumentStatements.map(
-        (s: TermwiseStatement) => anonymizer.anonymizeStatement(s)
+      // Get revealed indicies by comparing two statements
+      const preRevealedIndicies = this.getIndicies(
+        anonymizedStatements,
+        revealedStatements
       );
-      const revealedDocument = anonymizer.anonymizeJsonld(preRevealedDocument);
-      revealedDocuments.push(revealedDocument);
 
-      // Process multiple proofs in an input document
+      // Proof-wise processes
       let proofIndex = 0;
       for (const proof of proofs) {
         // Validate that the input proof document has a proof compatible with this suite
@@ -616,7 +768,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           )
         ) {
           throw new TypeError(
-            `proof document proof incompatible, expected proof types of ${JSON.stringify(
+            `incompatible proof type: expected proof types of ${JSON.stringify(
               BbsTermwiseSignatureProof2021.supportedDerivedProofType
             )} received ${proof.type}`
           );
@@ -627,57 +779,55 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         signatureArray.push(signature);
 
         // Canonicalize proof: get N-Quads from JSON-LD
-        const proofStatements: TermwiseStatement[] =
-          await suite.createVerifyProofData(proof, {
+        const proofStatements: Statement[] = await suite.createVerifyProofData(
+          proof,
+          {
             documentLoader,
             expansionMap,
             compactProof: !skipProofCompaction
-          });
-
-        // Concat proof and document to get terms to be signed
-        const terms = proofStatements
-          .concat(documentStatements)
-          .flatMap((item: TermwiseStatement) => item.toTerms());
-        termsArray.push(
-          terms.map((term: string) => new Uint8Array(Buffer.from(term)))
-        );
-
-        // Prepare anonymizedRevealedStatements: N-Quads revealed statements to be verified by verifier
-        // where each specified URI and bnid is replaced by anonymous ID, i.e., urn:anon:<UUIDv4>
-        const revealedStatements = await this.createVerifyDocumentData(
-          revealedDocument,
-          {
-            suite,
-            documentLoader,
-            expansionMap,
-            skipProofCompaction
           }
         );
-        revealedStatementsArray.push(revealedStatements);
 
-        // Calculate revealed indicies
-        // - statement indicies: embedded in the derived proof to be passed to the Verifier;
-        // - term indicies: input to blsCreateProof to generate zkproof
-        const [revealedStatementIndicies, revealedTermIndicies] =
-          this.getIndicies(
-            anonymizedStatements,
-            revealedStatements,
-            proofStatements
-          );
-        revealedStatementIndiciesArray.push(revealedStatementIndicies);
+        // Concat proof and document to get terms to be signed
+        const statements = proofStatements.concat(documentStatements);
+        termsArray.push(statements.flatMap((s) => s.serialize()));
+
+        // Finalize revealed indicies
+        const revealedIndicies = Array.from(
+          Array(proofStatements.length).keys()
+        ).concat(
+          preRevealedIndicies.map((idx) => idx + proofStatements.length)
+        );
+        revealedIndiciesArray.push(revealedIndicies);
+
+        // Calculate revealed term indicies
+        //   to be input to blsCreateProof to generate zkproof
+        const revealedTermIndicies =
+          this.statementIndiciesToTermIndicies(revealedIndicies);
         revealedTermIndiciesArray.push(revealedTermIndicies);
 
         // Push each term index of hidden URIs that are not removed by revealing process (JSON-LD framing)
         // to equivalence class
-        const skolemizedTerms = proofStatements
-          .concat(skolemizedDocumentStatements)
-          .flatMap((item: TermwiseStatement) => item.toTerms());
-        skolemizedTerms.forEach((term, termIndex) => {
-          if (equivs.has(term) && revealedTermIndicies.includes(termIndex)) {
-            const e = equivs.get(term) as [string, [number, number][]];
-            e[1].push([proofIndex + proofIndexOffset[docIndex], termIndex]);
-          }
-        });
+        proofStatements
+          .concat(skolemizedStatements)
+          .flatMap((statement) => statement.toTerms())
+          .forEach((term, termIndex) => {
+            if (equivs.has(term) && revealedTermIndicies.includes(termIndex)) {
+              const e = equivs.get(term) as [string, [number, number][]];
+              e[1].push([proofIndex + proofIndexOffset[docIndex], termIndex]);
+            }
+          });
+
+        // Add proof statements length to rangeproof indicies
+        rangeProofIndiciesArray.push(
+          rangeProofIndicies
+            .map(([idx, min, max]): [number, number, number] => [
+              idx + proofStatements.length * NUM_OF_TERMS_IN_STATEMENT,
+              min,
+              max
+            ])
+            .filter(([idx]) => revealedTermIndicies.includes(idx))
+        );
 
         // Fetch the verification method
         const verificationMethod = await this.getVerificationMethod({
@@ -720,9 +870,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         derivedProof.nonce = Buffer.from(nonce).toString("base64");
         // Embed the revealed statement indicies into the head of proofValue
         derivedProof.proofValue =
-          Buffer.from(JSON.stringify(revealedStatementIndicies)).toString(
-            "base64"
-          ) + ".";
+          Buffer.from(JSON.stringify(revealedIndicies)).toString("base64") +
+          ".";
         derivedProofs.push(derivedProof);
 
         proofIndex++;
@@ -754,7 +903,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       messages: termsArray,
       nonce: mergedNonce,
       revealed: revealedTermIndiciesArray,
-      equivs: equivsArray
+      equivs: equivsArray,
+      range: rangeProofIndiciesArray
     });
 
     // Set the proof value on the derived proof
@@ -831,6 +981,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const equivs: Map<string, [number, number][]> = new Map();
     const revealedStatementsArray: Statement[][] = [];
     const revealedTermIndiciesArray: number[][] = [];
+    const rangeProofIndiciesArray: [number, number, number][][] = [];
 
     const anonymizer = new URIAnonymizer();
 
@@ -857,30 +1008,57 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           );
         }
 
+        // Extract and convert range proof indicators
+        const expandedDocument = await jsonld.expand(document, {
+          documentLoader
+        });
+        this.compactRange(expandedDocument);
+
         // Canonicalize document: get N-Quads from JSON-LD
-        const revealedStatements: TermwiseStatement[] =
-          await this.createVerifyDocumentData(document, {
+        const revealedStatements: Statement[] =
+          await this.createVerifyDocumentData(expandedDocument, {
             documentLoader,
             expansionMap
           });
+        // keep document N-Quads statements to calculate challenge hash later
+        revealedStatementsArray.push(revealedStatements);
 
         // Process multiple proofs in an input document
         let proofIndex = 0;
         for (const proof of proofs) {
-          // keep document N-Quads statements per proof to calculate challenge hash later
-          revealedStatementsArray.push(revealedStatements);
-
           if (previous_nonce && proof.nonce !== previous_nonce) {
             throw new Error("all of the nonces must have the same values");
           }
           previous_nonce = proof.nonce;
 
+          // Validate that the input proof document has a proof compatible with this suite
+          if (!BbsTermwiseSignatureProof2021.proofType.includes(proof.type)) {
+            throw new TypeError(
+              `incompatible proof type: expected proof types of ${JSON.stringify(
+                BbsTermwiseSignatureProof2021.proofType
+              )} received ${proof.type}`
+            );
+          }
+
           // Extract revealed indicies and zkproof from proofValue
           const [revealedStatementIndiciesEncoded, proofValue] =
             proof.proofValue.split(".");
-          const revealedStatementIndicies: number[] = JSON.parse(
-            Buffer.from(revealedStatementIndiciesEncoded, "base64").toString()
-          );
+
+          if (
+            typeof revealedStatementIndiciesEncoded === "undefined" ||
+            typeof proofValue === "undefined"
+          ) {
+            throw new Error("invalid proofValue");
+          }
+
+          let revealedStatementIndicies: number[] = [];
+          try {
+            revealedStatementIndicies = JSON.parse(
+              Buffer.from(revealedStatementIndiciesEncoded, "base64").toString()
+            );
+          } catch (e) {
+            throw new Error("invalid proofValue");
+          }
 
           proofArray.push(new Uint8Array(Buffer.from(proofValue, "base64")));
 
@@ -888,11 +1066,13 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           proof.type = this.mappedDerivedProofType;
 
           // Canonicalize proof: get N-Quads from JSON-LD
-          const proofStatements: TermwiseStatement[] =
-            await this.createVerifyProofData(proof, {
+          const proofStatements: Statement[] = await this.createVerifyProofData(
+            proof,
+            {
               documentLoader,
               expansionMap
-            });
+            }
+          );
 
           // obtain termwise indicies
           const revealedTermIndicies = this.statementIndiciesToTermIndicies(
@@ -903,21 +1083,15 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           // Reorder statements
           const statements = proofStatements.concat(revealedStatements);
           const reorderedStatements = revealedStatementIndicies
-            .map<[number, TermwiseStatement]>((termIndex, origIndex) => [
+            .map<[number, Statement]>((termIndex, origIndex) => [
               termIndex,
               statements[origIndex]
             ])
             .sort(([termIndexA], [termIndexB]) => termIndexA - termIndexB)
             .map(([, statement]) => statement);
+          messagesArray.push(reorderedStatements.flatMap((s) => s.serialize()));
 
-          // concat proof and document to be verified
-          const terms = reorderedStatements.flatMap((item: TermwiseStatement) =>
-            item.toTerms()
-          );
-
-          messagesArray.push(
-            terms.map((term: string) => new Uint8Array(Buffer.from(term)))
-          );
+          const terms = reorderedStatements.flatMap((s) => s.toTerms());
 
           // extract blinding indicies from anonIDs
           terms.forEach((term, termIndex) => {
@@ -940,6 +1114,26 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
               }
             }
           });
+
+          // extract range proof indicators
+          const rangeProofIndicies: [number, number, number][] = terms
+            .map((term, termIndex): [string, number] => [term, termIndex])
+            .filter(([term]) => term.startsWith(`<${KEY_FOR_RANGEPROOF}`))
+            .map(([term, termIndex]) => {
+              const matched = term
+                .slice(KEY_FOR_RANGEPROOF.length + 1)
+                .match(/(\[|\() *(\d*) *, *(\d*) *(\]|\))/);
+              if (!matched || matched.length < 5) {
+                throw new Error("invalid range proofs");
+              }
+              const min_eq = matched[1] === "[";
+              const min = parseInt(matched[2]);
+              const max = parseInt(matched[3]);
+              const max_eq = matched[4] === "]";
+              const originalIndex = revealedTermIndicies[termIndex];
+              return [originalIndex, min, max];
+            });
+          rangeProofIndiciesArray.push(rangeProofIndicies);
 
           // Fetch the verification method
           const verificationMethod = await this.getVerificationMethod({
@@ -998,7 +1192,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         messages: messagesArray,
         nonce: mergedNonce,
         revealed: revealedTermIndiciesArray,
-        equivs: equivsArray
+        equivs: equivsArray,
+        range: rangeProofIndiciesArray
       });
 
       return verified;
@@ -1009,11 +1204,11 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
 
   static proofType = [
     "BbsTermwiseSignatureProof2021",
-    "https://www.zkp-ld.org/security#BbsTermwiseSignatureProof2021"
+    "https://zkp-ld.org/security#BbsTermwiseSignatureProof2021"
   ];
 
   static supportedDerivedProofType = [
     "BbsTermwiseSignature2021",
-    "https://www.zkp-ld.org/security#BbsTermwiseSignature2021"
+    "https://zkp-ld.org/security#BbsTermwiseSignature2021"
   ];
 }

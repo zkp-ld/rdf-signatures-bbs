@@ -10,7 +10,6 @@
   "credentialSubject": {
     "type": "Place",
     "@explicit": true,
-    "ownedBy": {},
-    "area": {}
+    "area": { "range": [10000, 50000] }
   }
 }
