@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
 import { suites } from "jsonld-signatures";
-import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
+import { Bls12381G2KeyPair } from "@zkp-ld/bls12381-key-pair";
 
 import {
   SignatureSuiteOptions,

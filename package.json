@@ -1,6 +1,6 @@
 {
   "name": "@zkp-ld/jsonld-signatures-bbs",
-  "version": "0.11.14",
+  "version": "0.11.15",
   "description": "**Experimental** (do not use in production): Based on MATTR's [jsonld-signatures-bbs](https://github.com/mattrglobal/jsonld-signatures-bbs)",
   "homepage": "https://github.com/zkp-ld/jsonld-signatures-bbs",
   "author": "yamdan",
@@ -63,8 +63,8 @@
   },
   "dependencies": {
     "@stablelib/random": "1.0.1",
-    "@zkp-ld/bbs-signatures": "0.6.12",
-    "@zkp-ld/bls12381-key-pair": "0.7.12",
+    "@zkp-ld/bbs-signatures": "0.6.14",
+    "@zkp-ld/bls12381-key-pair": "0.7.14",
     "bs58": "4.0.1",
     "jsonld": "5.2.0",
     "jsonld-signatures": "9.3.0",

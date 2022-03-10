@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import {
   blsCreateProofMulti,
   blsVerifyProofMulti
-} from "@yamdan/bbs-signatures";
-import { Bls12381G2KeyPair } from "@yamdan/bls12381-key-pair";
+} from "@zkp-ld/bbs-signatures";
+import { Bls12381G2KeyPair } from "@zkp-ld/bls12381-key-pair";
 
 import {
   DidDocumentPublicKey,

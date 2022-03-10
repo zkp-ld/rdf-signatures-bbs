@@ -221,7 +221,7 @@ describe("BbsTermwiseSignature2021", () => {
   it.skip("should not verify document with multiple proofs all but one of which is modified", async () => {
     // Temporarily Skipped:
     // While this looks like an unexpected behaviour for me, it is accepted by `jsonld-signatures`.
-    // See https://github.com/yamdan/jsonld-signatures-bbs/issues/2
+    // See https://github.com/zkp-ld/jsonld-signatures-bbs/issues/2
 
     const testSignedDocumentMultiBadProofs = {
       ...testSignedDocumentMultiProofs,
