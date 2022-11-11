@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import jsonld from "jsonld";
 import { suites } from "jsonld-signatures";
+import canonize from "rdf-canonize";
+import { DataFactory } from "rdf-data-factory";
+import * as RDF from "@rdfjs/types";
 import { randomBytes } from "@stablelib/random";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -20,7 +23,8 @@ import {
   VerifyProofMultiResult,
   DeriveProofOptions,
   VerifyProofOptions,
-  VerifyProofResult
+  VerifyProofResult,
+  DeriveProofMultiRDFOptions,
 } from "./types";
 import { BbsTermwiseSignature2021 } from "./BbsTermwiseSignature2021";
 import { Statement, TYPE_NAMED_NODE, XSD_INTEGER } from "./Statement";
@@ -29,7 +33,13 @@ import {
   NUM_OF_TERMS_IN_STATEMENT,
   KEY_FOR_RANGEPROOF
 } from "./utilities";
+import { TbsTerm } from "./types/DeriveProofMultiRDFOptions";
 
+const PROOF_VALUE_PREDICATE = "https://w3id.org/security#proofValue";
+const NONCE_PREDICATE = "https://w3id.org/security#nonce";
+const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const U8_STRING = 0;
+const U8_INTEGER = 1;
 class URIAnonymizer {
   private prefix = "urn:anon:";
   private regexp = /^<urn:anon:([^>]+)>/;
@@ -112,7 +122,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     }
     throw new TypeError(
       `The document to be signed must contain this suite's @context, ` +
-        `"${contextUrl}".`
+      `"${contextUrl}".`
     );
   }
 
@@ -1211,4 +1221,347 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     "BbsTermwiseSignature2021",
     "https://zkp-ld.org/security#BbsTermwiseSignature2021"
   ];
+
+  /**
+   * Derive proofs from multiple proofs and reveal documents
+   *
+   * @param options {object} options for deriving proofs.
+   *
+   * @returns {Promise<object[]>} Resolves with the array of derived proofs object.
+   */
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  async deriveProofMultiRDF(options: DeriveProofMultiRDFOptions): Promise<object[]> {
+    const {
+      inputDocuments,
+      documentLoader,
+      nonce: givenNonce
+    } = options;
+
+    const rdfdf = new DataFactory();
+
+    // Create a nonce if one is not supplied
+    const nonce = givenNonce || randomBytes(50);
+
+    const termsArray: Uint8Array[][] = [];
+    const revealedIndiciesArray: number[][] = [];
+    const revealedTermIndiciesArray: number[][] = [];
+    const issuerPublicKeyArray: Buffer[] = [];
+    const signatureArray: Buffer[] = [];
+    const revealedDocuments: any = [];
+    const derivedProofs: any = [];
+    const revealedStatementsArray: Statement[][] = [];
+    const rangeProofIndiciesArray: [number, number, number][][] = [];
+
+    const equivs = new Map<string, [string, [number, number][]]>();
+
+    const anonymizer = new URIAnonymizer(equivs);
+
+    const numberOfProofs: number[]
+      = inputDocuments.map(({ proofs }) => proofs.length);
+
+    const proofIndexOffset: number[] = numberOfProofs.map((_, i) =>
+      numberOfProofs.slice(0, i).reduce((a, b) => a + b, 0)
+    );
+
+    let docIndex = 0;
+    for (const {
+      document,
+      proofs,
+      revealedDocument,
+      anonToTerm,
+    } of inputDocuments) {
+      // Initialize the signature suite
+      const suite = new this.Suite();
+
+      // Ensure that the revealed document is a derived subset of the document
+      // TBD
+
+      // Canonicalize the document
+      const { canonicalizedDocument, blankToCanon }: {
+        canonicalizedDocument: RDF.Quad[],
+        blankToCanon: Map<string, string>
+      } = await canonize.canonize(document, {
+        algorithm: 'URDNA2015', withMap: true
+      });
+
+      // Canonicalize the revealed document
+      const canonicalizedRevealedDocument: RDF.Quad[]
+        = await canonize.canonize(revealedDocument, {
+          algorithm: 'URDNA2015'
+        });
+
+      // Compose anonToTerm and blankToCanon maps
+      const anonToCanon = new Map([...anonToTerm.entries()].map(
+        ([anon, term]) => [anon,
+          term.termType === 'BlankNode'
+            ? rdfdf.blankNode(blankToCanon.get(term.value))
+            : term]
+      ));
+
+      // De-anonymize the canonicalized revealed document using anonToCanon map
+      const deAnonymizedCanonicalizedRevealedDocument
+        = canonicalizedRevealedDocument.map((quad) => {
+          const subject = anonToCanon.get(quad.subject.value) ?? quad.subject;
+          const predicate = anonToCanon.get(quad.predicate.value) ?? quad.predicate;
+          const object = anonToCanon.get(quad.object.value) ?? quad.object;
+          const graph = anonToCanon.get(quad.graph.value) ?? quad.graph;
+          if (subject.termType === "Literal"
+            || predicate.termType === "BlankNode"
+            || predicate.termType === "Literal"
+            || graph.termType === "Literal") {
+            throw new Error(
+              "invalid anonToTerm map"
+            );
+          }
+          return rdfdf.quad(subject, predicate, object, graph);
+        })
+
+      // Serialize and sort documents
+      const canonicalizedDocumentNQuads: string[]
+        = canonize.NQuads.serialize(canonicalizedDocument).sort();
+      const deAnonymizedCanonicalizedRevealedDocumentNQuads: string[]
+        = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument).sort();
+
+      // Get revealed indicies (statement-wise mapping)
+      // by comparing canonicalizedDocument and deAnonymizedCanonicalizedRevealedDocument
+      const preRevealedIndicies
+        = deAnonymizedCanonicalizedRevealedDocumentNQuads.map((anon) =>
+          canonicalizedDocumentNQuads.findIndex((c14n) => anon === c14n));
+
+      // Identify term-wise mapping based on statement-wise mapping
+
+      // Proof-wise processes
+      let proofIndex = 0;
+      for (const proof of proofs) {
+        // Validate that the input proof document has a proof compatible with this suite
+        const proofType = proof
+          .find((quad) => quad.predicate.value === RDF_TYPE)?.object;
+        if (proofType == undefined) {
+          throw new Error("missing proof.type");
+        }
+        if (!BbsTermwiseSignatureProof2021.supportedDerivedProofType.includes(
+          proofType.value
+        )
+        ) {
+          throw new TypeError(
+            `incompatible proof type: expected proof types of ${JSON.stringify(
+              BbsTermwiseSignatureProof2021.supportedDerivedProofType
+            )} received ${proofType.value}`
+          );
+        }
+
+        // Extract the original BBS signature from the input proof
+        const proofValue = proof
+          .find((quad) => quad.predicate.value === PROOF_VALUE_PREDICATE)?.object;
+        if (proofValue == undefined) {
+          throw new Error("missing proof.proofValue");
+        }
+        const signature = Buffer.from(proofValue.value, "base64");
+        signatureArray.push(signature);
+
+        // Canonicalize, serialize, and sort proof
+        const proofTBS = proof
+          .filter((quad) =>
+            quad.predicate.value !== PROOF_VALUE_PREDICATE &&
+            quad.predicate.value !== NONCE_PREDICATE)
+          .map((quad) => rdfdf.quad(quad.subject, quad.predicate, quad.object)); // remove graph name
+        const canonicalizedProofNQuads: string
+          = await canonize.canonize(proofTBS, {
+            algorithm: 'URDNA2015',
+            format: "application/nquads"
+          });
+
+        // Concat proof and document to get terms to be signed
+        const statementsNQuads = [canonicalizedProofNQuads, canonicalizedDocumentNQuads].join("\n");
+        const statements: RDF.Quad[] = canonize.NQuads.parse(statementsNQuads);
+        const terms = statements.flatMap((quad) => {
+          const subjectValue = quad.subject.termType === "NamedNode"
+            ? `<${quad.subject.value}>` : quad.subject.value;
+          const subject = new Uint8Array([
+            U8_STRING, // shows that this array encodes string
+            ...Buffer.from(subjectValue)
+          ]);
+
+          const predicateValue = `<${quad.predicate.value}>`;
+          const predicate = new Uint8Array([
+            U8_STRING, // shows that this array encodes string
+            ...Buffer.from(predicateValue)
+          ]);
+
+          const objectValue = quad.object.termType === "NamedNode"
+            ? `<${quad.object.value}>` : quad.object.value;
+          let object = new Uint8Array([
+            U8_STRING, // shows that this array encodes string
+            ...Buffer.from(objectValue)
+          ]);
+          if (quad.object.termType === "Literal"
+            && quad.object.datatype.value === XSD_INTEGER) {
+            const num = parseInt(objectValue);
+            if (Number.isSafeInteger(num) && Math.abs(num) < 2 ** 31) {
+              object = Uint8Array.of(
+                U8_INTEGER, // shows that this array encodes 32-bit integer (big endian)
+                (num & 0xff000000) >> 24,
+                (num & 0x00ff0000) >> 16,
+                (num & 0x0000ff00) >> 8,
+                (num & 0x000000ff) >> 0
+              );
+            }
+          }
+
+          const graphValue = quad.graph.termType === "NamedNode"
+            ? `<${quad.graph.value}>` : quad.graph.value;
+          const graph = new Uint8Array([
+            U8_STRING, // shows that this array encodes string
+            ...Buffer.from(graphValue)
+          ]);
+
+          return [subject, predicate, object, graph];
+        });
+        termsArray.push(terms);
+
+        // Finalize revealed indicies
+        const revealedIndicies = Array.from(
+          Array(proofTBS.length).keys()
+        ).concat(
+          preRevealedIndicies.map((idx) => idx + proofTBS.length)
+        );
+        revealedIndiciesArray.push(revealedIndicies);
+
+        // Calculate revealed term indicies
+        //   to be input to blsCreateProof to generate zkproof
+        const revealedTermIndicies =
+          this.statementIndiciesToTermIndicies(revealedIndicies);
+        revealedTermIndiciesArray.push(revealedTermIndicies);
+
+        // Push each term index of hidden URIs that are not removed by revealing process (JSON-LD framing)
+        // to equivalence class
+        proofStatements
+          .concat(skolemizedStatements)
+          .flatMap((statement) => statement.toTerms())
+          .forEach((term, termIndex) => {
+            if (equivs.has(term) && revealedTermIndicies.includes(termIndex)) {
+              const e = equivs.get(term) as [string, [number, number][]];
+              e[1].push([proofIndex + proofIndexOffset[docIndex], termIndex]);
+            }
+          });
+
+        // Add proof statements length to rangeproof indicies
+        rangeProofIndiciesArray.push(
+          rangeProofIndicies
+            .map(([idx, min, max]): [number, number, number] => [
+              idx + proofStatements.length * NUM_OF_TERMS_IN_STATEMENT,
+              min,
+              max
+            ])
+            .filter(([idx]) => revealedTermIndicies.includes(idx))
+        );
+
+        // Fetch the verification method
+        const verificationMethod = await this.getVerificationMethod({
+          proof,
+          document,
+          documentLoader,
+          expansionMap
+        });
+
+        // Construct a key pair class from the returned verification method
+        const issuerPublicKey = verificationMethod.publicKeyJwk
+          ? await this.LDKeyClass.fromJwk(verificationMethod)
+          : await this.LDKeyClass.from(verificationMethod);
+        issuerPublicKeyArray.push(issuerPublicKey.publicKeyBuffer);
+
+        // Initialize the derived proof
+        let derivedProof;
+        if (this.proof) {
+          // use proof JSON-LD document passed to API
+          derivedProof = await jsonld.compact(
+            this.proof,
+            SECURITY_CONTEXT_URLS,
+            {
+              documentLoader,
+              expansionMap,
+              compactToRelative: false
+            }
+          );
+        } else {
+          // Create proof JSON-LD document
+          derivedProof = { "@context": SECURITY_CONTEXT_URLS };
+        }
+        // Ensure proof type is set
+        derivedProof.type = this.type;
+        // Set the relevant proof elements on the derived proof from the input proof
+        derivedProof.verificationMethod = proof.verificationMethod;
+        derivedProof.proofPurpose = proof.proofPurpose;
+        derivedProof.created = proof.created;
+        // Set the nonce on the derived proof
+        derivedProof.nonce = Buffer.from(nonce).toString("base64");
+        // Embed the revealed statement indicies into the head of proofValue
+        derivedProof.proofValue =
+          Buffer.from(JSON.stringify(revealedIndicies)).toString("base64") +
+          ".";
+        derivedProofs.push(derivedProof);
+
+        proofIndex++;
+      }
+
+      docIndex++;
+    }
+
+    const equivsArray: [number, number][][] = [...equivs.values()].map(
+      (v) => v[1]
+    );
+
+    // merge revealed statements into nonce (should be separated as claims?)
+    const revealedStatementsByte = this.statementToUint8(
+      revealedStatementsArray
+    );
+    const mergedNonce = new Uint8Array(
+      nonce.length + revealedStatementsByte.length
+    );
+    mergedNonce.set(nonce);
+    mergedNonce.set(revealedStatementsByte, nonce.length);
+
+    // Compute the proof
+    const derivedProofValues = await blsCreateProofMulti({
+      signature: signatureArray.map((signature) => new Uint8Array(signature)),
+      publicKey: issuerPublicKeyArray.map(
+        (issuerPublicKey: Buffer) => new Uint8Array(issuerPublicKey)
+      ),
+      messages: termsArray,
+      nonce: mergedNonce,
+      revealed: revealedTermIndiciesArray,
+      equivs: equivsArray,
+      range: rangeProofIndiciesArray
+    });
+
+    // Set the proof value on the derived proof
+    const results = [];
+    for (const numberOfProof of numberOfProofs) {
+      const revealedDocument = revealedDocuments.shift();
+      const derivedProofsPerDoc = [];
+
+      for (let _ = 0; _ < numberOfProof; _++) {
+        const derivedProof = derivedProofs.shift();
+        const derivedProofValue = derivedProofValues.shift();
+        if (!derivedProofValue) {
+          throw new Error(
+            "invalid proofValue generated by blsCreateProofMulti"
+          );
+        }
+        derivedProof.proofValue +=
+          Buffer.from(derivedProofValue).toString("base64");
+        derivedProofsPerDoc.push(derivedProof);
+      }
+
+      results.push({
+        document: revealedDocument,
+        proof:
+          derivedProofsPerDoc.length === 1
+            ? derivedProofsPerDoc[0]
+            : derivedProofsPerDoc
+      });
+    }
+
+    return results;
+  }
 }

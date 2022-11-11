@@ -62,13 +62,15 @@
     "typescript": "4.4.3"
   },
   "dependencies": {
+    "@rdfjs/types": "^1.1.0",
     "@stablelib/random": "1.0.1",
     "@zkp-ld/bbs-signatures": "0.6.14",
     "@zkp-ld/bls12381-key-pair": "0.7.14",
     "bs58": "4.0.1",
     "jsonld": "5.2.0",
     "jsonld-signatures": "9.3.0",
-    "rdf-canonize": "^3.0.0",
+    "rdf-canonize": "link:../rdf-canonize",
+    "rdf-data-factory": "^1.1.1",
     "uuid": "8.3.2"
   },
   "husky": {
