@@ -1252,9 +1252,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const revealedStatementsArray: Statement[][] = [];
     const rangeProofIndiciesArray: [number, number, number][][] = [];
 
-    const equivs = new Map<string, [string, [number, number][]]>();
-
-    const anonymizer = new URIAnonymizer(equivs);
+    const equivs = new Map<string, [number, number][]>();
 
     const numberOfProofs: number[]
       = inputDocuments.map(({ proofs }) => proofs.length);
@@ -1275,6 +1273,13 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
 
       // Ensure that the revealed document is a derived subset of the document
       // TBD
+
+      // Add anon IDs in the revealed document to equivs map
+      for (const anon of anonToTerm.keys()) {
+        if (!equivs.has(anon)) {
+          equivs.set(anon, []);
+        }
+      }
 
       // Canonicalize the document
       const { canonicalizedDocument, blankToCanon }: {
@@ -1319,16 +1324,19 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       // Serialize and sort documents
       const canonicalizedDocumentNQuads: string[]
         = canonize.NQuads.serialize(canonicalizedDocument).sort();
+      const canonicalizedRevealedDocumentNQuads: string[]
+        = canonize.NQuads.serialize(canonicalizedRevealedDocument).sort();
       const deAnonymizedCanonicalizedRevealedDocumentNQuads: string[]
         = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument).sort();
 
-      // Get revealed indicies (statement-wise mapping)
-      // by comparing canonicalizedDocument and deAnonymizedCanonicalizedRevealedDocument
+      // Get revealed indicies,
+      // i.e., statement-wise index mapping
+      // from the de-anonymized and canonicalized revealed document
+      // to the canonicalized document
+      // without counting proof statements yet (so has **pre** as its name)
       const preRevealedIndicies
         = deAnonymizedCanonicalizedRevealedDocumentNQuads.map((anon) =>
           canonicalizedDocumentNQuads.findIndex((c14n) => anon === c14n));
-
-      // Identify term-wise mapping based on statement-wise mapping
 
       // Proof-wise processes
       let proofIndex = 0;
@@ -1419,7 +1427,10 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         });
         termsArray.push(terms);
 
-        // Finalize revealed indicies
+        // Finalize revealed indicies,
+        // i.e., statement-wise index mapping
+        // from the de-anonymized and canonicalized revealed document
+        // to the canonicalized document
         const revealedIndicies = Array.from(
           Array(proofTBS.length).keys()
         ).concat(
@@ -1433,15 +1444,17 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           this.statementIndiciesToTermIndicies(revealedIndicies);
         revealedTermIndiciesArray.push(revealedTermIndicies);
 
-        // Push each term index of hidden URIs that are not removed by revealing process (JSON-LD framing)
-        // to equivalence class
-        proofStatements
-          .concat(skolemizedStatements)
-          .flatMap((statement) => statement.toTerms())
+        // Push each anonymized term index with its credential index to equivs map
+        const canonicalizedRevealedStatementsNQuads = [canonicalizedProofNQuads, canonicalizedRevealedDocumentNQuads].join("\n");
+        const canonicalizedRevealedStatements: RDF.Quad[] = canonize.NQuads.parse(canonicalizedRevealedStatementsNQuads);
+        canonicalizedRevealedStatements
+          .flatMap((q) => [q.subject, q.predicate, q.object, q.graph])
           .forEach((term, termIndex) => {
-            if (equivs.has(term) && revealedTermIndicies.includes(termIndex)) {
-              const e = equivs.get(term) as [string, [number, number][]];
-              e[1].push([proofIndex + proofIndexOffset[docIndex], termIndex]);
+            if (equivs.has(term.value)) {
+              const e = equivs.get(term.value) as [number, number][];
+              const credIndex = proofIndex + proofIndexOffset[docIndex];
+              const credTermIndex = revealedTermIndicies[termIndex];
+              e.push([credIndex, credTermIndex]);
             }
           });
 
