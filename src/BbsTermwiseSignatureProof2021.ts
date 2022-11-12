@@ -1285,15 +1285,15 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       }
 
       // Canonicalize the document
-      const { canonicalizedDocument, blankToCanon }: {
-        canonicalizedDocument: RDF.Quad[],
+      const { dataset: canonicalizedDocument, blankToCanon }: {
+        dataset: Set<RDF.Quad>,
         blankToCanon: Map<string, string>
       } = await canonize.canonize(document, {
         algorithm: 'URDNA2015', withMap: true
       });
 
       // Canonicalize the revealed document
-      const canonicalizedRevealedDocument: RDF.Quad[]
+      const canonicalizedRevealedDocument: Set<RDF.Quad>
         = await canonize.canonize(revealedDocument, {
           algorithm: 'URDNA2015'
         });
@@ -1308,7 +1308,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
 
       // De-anonymize the canonicalized revealed document using anonToCanon map
       const deAnonymizedCanonicalizedRevealedDocument
-        = canonicalizedRevealedDocument.map((quad) => {
+        = [...canonicalizedRevealedDocument].map((quad) => {
           const subject = anonToCanon.get(quad.subject.value) ?? quad.subject;
           const predicate = anonToCanon.get(quad.predicate.value) ?? quad.predicate;
           const object = anonToCanon.get(quad.object.value) ?? quad.object;
@@ -1325,12 +1325,12 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         })
 
       // Serialize and sort documents
-      const canonicalizedDocumentNQuads: string[]
-        = canonize.NQuads.serialize(canonicalizedDocument).sort();
-      const canonicalizedRevealedDocumentNQuads: string[]
-        = canonize.NQuads.serialize(canonicalizedRevealedDocument).sort();
-      const deAnonymizedCanonicalizedRevealedDocumentNQuads: string[]
-        = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument).sort();
+      const canonicalizedDocumentNQuads: string
+        = canonize.NQuads.serialize([...canonicalizedDocument]);
+      const canonicalizedRevealedDocumentNQuads: string
+        = canonize.NQuads.serialize([...canonicalizedRevealedDocument]);
+      const deAnonymizedCanonicalizedRevealedDocumentNQuads: string
+        = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument);
 
       // Get revealed indicies,
       // i.e., statement-wise index mapping
@@ -1338,8 +1338,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       // to the canonicalized document
       // without counting proof statements yet (so has **pre** as its name)
       const preRevealedIndicies
-        = deAnonymizedCanonicalizedRevealedDocumentNQuads.map((anon) =>
-          canonicalizedDocumentNQuads.findIndex((c14n) => anon === c14n));
+        = deAnonymizedCanonicalizedRevealedDocumentNQuads.split("\n").map((anon) =>
+          canonicalizedDocumentNQuads.split("\n").findIndex((c14n) => anon === c14n));
 
       // Proof-wise processes
       let proofIndex = 0;
@@ -1440,7 +1440,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         ).concat(
           preRevealedIndicies.map((idx) => idx + proofTBS.length)
         );
-        revealedIndiciesArray.push(revealedIndicies);
 
         // Calculate revealed term indicies
         //   to be input to blsCreateProof to generate zkproof
@@ -1496,7 +1495,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         // Initialize the derived proof
         const preDerivedProof: RDF.Quad[]
           = proofTBS
-            .map((quad) => rdfdf.fromQuad(quad))
             .filter((quad) => !(
               quad.predicate.value === RDF_TYPE &&
               quad.object.value === SIGNATURE_TYPE));

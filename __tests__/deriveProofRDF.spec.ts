@@ -97,11 +97,11 @@ const anonToTerm = new Map<string, RDF.NamedNode | RDF.BlankNode | RDF.Literal>(
   ["https://zkp-ld.org/.well-known/genid/anonymous/iri#lVhEcU",
     rdfdf.namedNode("did:example:John")],
   ["https://zkp-ld.org/.well-known/genid/anonymous/literal#ZpJ6Aw",
-    rdfdf.literal("80000", rdfdf.namedNode("'http://www.w3.org/2001/XMLSchema#integer"))],
+    rdfdf.literal("80000", rdfdf.namedNode("http://www.w3.org/2001/XMLSchema#integer"))],
 ]);
 
 const inputDocuments = [
-  { document: document1, proofs: proofs1, revealedDocument: revealedDocument1, anonToTerm },
+//  { document: document1, proofs: proofs1, revealedDocument: revealedDocument1, anonToTerm },
   { document: document2, proofs: proofs2, revealedDocument: revealedDocument2, anonToTerm },
 ];
 
