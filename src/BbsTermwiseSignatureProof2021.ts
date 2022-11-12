@@ -33,13 +33,16 @@ import {
   NUM_OF_TERMS_IN_STATEMENT,
   KEY_FOR_RANGEPROOF
 } from "./utilities";
-import { TbsTerm } from "./types/DeriveProofMultiRDFOptions";
 
 const PROOF_VALUE_PREDICATE = "https://w3id.org/security#proofValue";
+const VERIFICATION_METHOD_PREDICATE = "https://w3id.org/security#verificationMethod";
 const NONCE_PREDICATE = "https://w3id.org/security#nonce";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const SIGNATURE_TYPE = "https://zkp-ld.org/security#BbsTermwiseSignature2021"
+const PROOF_TYPE = "https://zkp-ld.org/security#BbsTermwiseSignatureProof2021"
 const U8_STRING = 0;
 const U8_INTEGER = 1;
+
 class URIAnonymizer {
   private prefix = "urn:anon:";
   private regexp = /^<urn:anon:([^>]+)>/;
@@ -1247,9 +1250,9 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const revealedTermIndiciesArray: number[][] = [];
     const issuerPublicKeyArray: Buffer[] = [];
     const signatureArray: Buffer[] = [];
-    const revealedDocuments: any = [];
-    const derivedProofs: any = [];
-    const revealedStatementsArray: Statement[][] = [];
+    const revealedDocuments: RDF.Quad[][] = [];
+    const preDerivedProofs: RDF.Quad[][] = [];
+    const canonicalizedRevealedStatementsNQuadsArray: string[] = [];
     const rangeProofIndiciesArray: [number, number, number][][] = [];
 
     const equivs = new Map<string, [number, number][]>();
@@ -1268,11 +1271,11 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       revealedDocument,
       anonToTerm,
     } of inputDocuments) {
-      // Initialize the signature suite
-      const suite = new this.Suite();
-
       // Ensure that the revealed document is a derived subset of the document
       // TBD
+
+      // store revealed document to be given into Fiat-Shamir hash calculation below
+      revealedDocuments.push(revealedDocument);
 
       // Add anon IDs in the revealed document to equivs map
       for (const anon of anonToTerm.keys()) {
@@ -1342,11 +1345,12 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       let proofIndex = 0;
       for (const proof of proofs) {
         // Validate that the input proof document has a proof compatible with this suite
-        const proofType = proof
-          .find((quad) => quad.predicate.value === RDF_TYPE)?.object;
-        if (proofType == undefined) {
+        const proofIdAndType = proof
+          .find((quad) => quad.predicate.value === RDF_TYPE);
+        if (proofIdAndType == undefined) {
           throw new Error("missing proof.type");
         }
+        const { subject: proofId, object: proofType } = proofIdAndType;
         if (!BbsTermwiseSignatureProof2021.supportedDerivedProofType.includes(
           proofType.value
         )
@@ -1444,9 +1448,19 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           this.statementIndiciesToTermIndicies(revealedIndicies);
         revealedTermIndiciesArray.push(revealedTermIndicies);
 
+        // Calculate canonicalized revealed statements
+        // (= proof + canonicalized revealed document)
+        const canonicalizedRevealedStatementsNQuads
+          = [canonicalizedProofNQuads,
+            canonicalizedRevealedDocumentNQuads].join("\n");
+        canonicalizedRevealedStatementsNQuadsArray
+          .push(canonicalizedRevealedStatementsNQuads);
+        const canonicalizedRevealedStatements: RDF.Quad[]
+          = canonize.NQuads.parse(
+            canonicalizedRevealedStatementsNQuads
+          );
+
         // Push each anonymized term index with its credential index to equivs map
-        const canonicalizedRevealedStatementsNQuads = [canonicalizedProofNQuads, canonicalizedRevealedDocumentNQuads].join("\n");
-        const canonicalizedRevealedStatements: RDF.Quad[] = canonize.NQuads.parse(canonicalizedRevealedStatementsNQuads);
         canonicalizedRevealedStatements
           .flatMap((q) => [q.subject, q.predicate, q.object, q.graph])
           .forEach((term, termIndex) => {
@@ -1458,23 +1472,19 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
             }
           });
 
-        // Add proof statements length to rangeproof indicies
-        rangeProofIndiciesArray.push(
-          rangeProofIndicies
-            .map(([idx, min, max]): [number, number, number] => [
-              idx + proofStatements.length * NUM_OF_TERMS_IN_STATEMENT,
-              min,
-              max
-            ])
-            .filter(([idx]) => revealedTermIndicies.includes(idx))
-        );
+        // TBD: Add proof statements length to rangeproof indicies
 
         // Fetch the verification method
+        const verificationMethodId = proof
+          .find((quad) => quad.predicate.value === VERIFICATION_METHOD_PREDICATE)?.object.value;
+        if (verificationMethodId == undefined) {
+          throw new Error("missing proof.verificationMethod");
+        }
         const verificationMethod = await this.getVerificationMethod({
-          proof,
-          document,
-          documentLoader,
-          expansionMap
+          proof: {
+            verificationMethod: verificationMethodId
+          },
+          documentLoader
         });
 
         // Construct a key pair class from the returned verification method
@@ -1484,35 +1494,32 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         issuerPublicKeyArray.push(issuerPublicKey.publicKeyBuffer);
 
         // Initialize the derived proof
-        let derivedProof;
-        if (this.proof) {
-          // use proof JSON-LD document passed to API
-          derivedProof = await jsonld.compact(
-            this.proof,
-            SECURITY_CONTEXT_URLS,
-            {
-              documentLoader,
-              expansionMap,
-              compactToRelative: false
-            }
-          );
-        } else {
-          // Create proof JSON-LD document
-          derivedProof = { "@context": SECURITY_CONTEXT_URLS };
-        }
+        const preDerivedProof: RDF.Quad[]
+          = proofTBS
+            .map((quad) => rdfdf.fromQuad(quad))
+            .filter((quad) => !(
+              quad.predicate.value === RDF_TYPE &&
+              quad.object.value === SIGNATURE_TYPE));
         // Ensure proof type is set
-        derivedProof.type = this.type;
-        // Set the relevant proof elements on the derived proof from the input proof
-        derivedProof.verificationMethod = proof.verificationMethod;
-        derivedProof.proofPurpose = proof.proofPurpose;
-        derivedProof.created = proof.created;
+        preDerivedProof.push(rdfdf.quad(
+          proofId,
+          rdfdf.namedNode(RDF_TYPE),
+          rdfdf.namedNode(PROOF_TYPE)
+        ));
         // Set the nonce on the derived proof
-        derivedProof.nonce = Buffer.from(nonce).toString("base64");
+        preDerivedProof.push(rdfdf.quad(
+          proofId,
+          rdfdf.namedNode(NONCE_PREDICATE),
+          rdfdf.literal(Buffer.from(nonce).toString("base64"))
+        ));
         // Embed the revealed statement indicies into the head of proofValue
-        derivedProof.proofValue =
-          Buffer.from(JSON.stringify(revealedIndicies)).toString("base64") +
-          ".";
-        derivedProofs.push(derivedProof);
+        preDerivedProof.push(rdfdf.quad(
+          proofId,
+          rdfdf.namedNode(PROOF_VALUE_PREDICATE),
+          rdfdf.literal(Buffer.from(JSON.stringify(revealedIndicies)).toString("base64") +
+            ".")
+        ));
+        preDerivedProofs.push(preDerivedProof);
 
         proofIndex++;
       }
@@ -1520,13 +1527,13 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       docIndex++;
     }
 
-    const equivsArray: [number, number][][] = [...equivs.values()].map(
-      (v) => v[1]
-    );
+    const equivsArray: [number, number][][] = [...equivs.values()];
 
     // merge revealed statements into nonce (should be separated as claims?)
-    const revealedStatementsByte = this.statementToUint8(
-      revealedStatementsArray
+    const revealedStatementsByte = new Uint8Array(
+      Buffer.from(
+        canonicalizedRevealedStatementsNQuadsArray.join("")
+      )
     );
     const mergedNonce = new Uint8Array(
       nonce.length + revealedStatementsByte.length
@@ -1535,7 +1542,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     mergedNonce.set(revealedStatementsByte, nonce.length);
 
     // Compute the proof
-    const derivedProofValues = await blsCreateProofMulti({
+    const bbsDerivedProofValues = await blsCreateProofMulti({
       signature: signatureArray.map((signature) => new Uint8Array(signature)),
       publicKey: issuerPublicKeyArray.map(
         (issuerPublicKey: Buffer) => new Uint8Array(issuerPublicKey)
@@ -1551,27 +1558,45 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const results = [];
     for (const numberOfProof of numberOfProofs) {
       const revealedDocument = revealedDocuments.shift();
-      const derivedProofsPerDoc = [];
+      const derivedProofs = [];
 
       for (let _ = 0; _ < numberOfProof; _++) {
-        const derivedProof = derivedProofs.shift();
-        const derivedProofValue = derivedProofValues.shift();
-        if (!derivedProofValue) {
+        const preDerivedProof = preDerivedProofs.shift();
+        const bbsDerivedProofValue = bbsDerivedProofValues.shift();
+        if (preDerivedProof == undefined || bbsDerivedProofValue == undefined) {
           throw new Error(
             "invalid proofValue generated by blsCreateProofMulti"
           );
         }
-        derivedProof.proofValue +=
-          Buffer.from(derivedProofValue).toString("base64");
-        derivedProofsPerDoc.push(derivedProof);
+        const preDerivedProofIdAndValue = preDerivedProof
+          .find((quad) =>
+            quad.predicate.value === PROOF_VALUE_PREDICATE);
+        if (preDerivedProofIdAndValue == undefined) {
+          throw new Error("invalid derived proof");
+        }
+        const {
+          subject: preDerivedProofId,
+          object: preDerivedProofValue
+        } = preDerivedProofIdAndValue;
+
+        const derivedProofValue
+          = preDerivedProofValue.value +
+          Buffer.from(bbsDerivedProofValue).toString("base64");
+        const derivedProof = preDerivedProof
+          .filter((quad) => !(quad.predicate.value === PROOF_VALUE_PREDICATE));
+        derivedProof.push(
+          rdfdf.quad(
+            preDerivedProofId,
+            rdfdf.namedNode(PROOF_VALUE_PREDICATE),
+            rdfdf.literal(derivedProofValue)
+          ));
+
+        derivedProofs.push(derivedProof);
       }
 
       results.push({
         document: revealedDocument,
-        proof:
-          derivedProofsPerDoc.length === 1
-            ? derivedProofsPerDoc[0]
-            : derivedProofsPerDoc
+        proof: derivedProofs
       });
     }
 
