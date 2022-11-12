@@ -1253,7 +1253,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const revealedDocuments: RDF.Quad[][] = [];
     const preDerivedProofs: RDF.Quad[][] = [];
     const canonicalizedRevealedStatementsNQuadsArray: string[] = [];
-    const rangeProofIndiciesArray: [number, number, number][][] = [];
+    const rangeProofIndiciesArray: [number, number, number][][] = [[]];
 
     const equivs = new Map<string, [number, number][]>();
 
@@ -1337,9 +1337,11 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       // from the de-anonymized and canonicalized revealed document
       // to the canonicalized document
       // without counting proof statements yet (so has **pre** as its name)
+      const canonicalizedDocumentNQuadArray = canonicalizedDocumentNQuads.split("\n").filter((q) => q !== "");
+      const deAnonymizedCanonicalizedRevealedDocumentNQuadArray = deAnonymizedCanonicalizedRevealedDocumentNQuads.split("\n").filter((q) => q !== "");
       const preRevealedIndicies
-        = deAnonymizedCanonicalizedRevealedDocumentNQuads.split("\n").map((anon) =>
-          canonicalizedDocumentNQuads.split("\n").findIndex((c14n) => anon === c14n));
+        = deAnonymizedCanonicalizedRevealedDocumentNQuadArray.map((anon) =>
+          canonicalizedDocumentNQuadArray.findIndex((c14n) => anon === c14n));
 
       // Proof-wise processes
       let proofIndex = 0;
@@ -1382,9 +1384,11 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
             algorithm: 'URDNA2015',
             format: "application/nquads"
           });
+        const canonicalizedProofNQuadArray = canonicalizedProofNQuads.split("\n").filter((q) => q !== "");
 
         // Concat proof and document to get terms to be signed
         const statementsNQuads = [canonicalizedProofNQuads, canonicalizedDocumentNQuads].join("\n");
+        const statementsNQuadArray = canonicalizedProofNQuadArray.concat(canonicalizedDocumentNQuadArray);
         const statements: RDF.Quad[] = canonize.NQuads.parse(statementsNQuads);
         const terms = statements.flatMap((quad) => {
           const subjectValue = quad.subject.termType === "NamedNode"

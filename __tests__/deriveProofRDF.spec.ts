@@ -36,7 +36,6 @@ const document1 = canonize.NQuads.parse(`
 <did:example:John> <http://schema.org/homeLocation> <http://example.org/cityA> .
 <did:example:John> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> .
 _:6b83e0ac70e <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
-_:6b83e0ac70e <https://w3id.org/security#proof> _:6b83e0ac703 .
 _:6b83e0ac70e <https://www.w3.org/2018/credentials#credentialSubject> <did:example:John> .
 _:6b83e0ac70e <https://www.w3.org/2018/credentials#expirationDate> "2023-11-12T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 _:6b83e0ac70e <https://www.w3.org/2018/credentials#issuanceDate> "2022-11-12T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
@@ -47,7 +46,6 @@ const revealedDocument1 = canonize.NQuads.parse(`
 <https://zkp-ld.org/.well-known/genid/anonymous/iri#lVhEcU> <http://schema.org/homeLocation> <http://example.org/cityA> .
 <https://zkp-ld.org/.well-known/genid/anonymous/iri#lVhEcU> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Person> .
 _:6b83e0ac70e <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
-_:6b83e0ac70e <https://w3id.org/security#proof> _:6b83e0ac703 .
 _:6b83e0ac70e <https://www.w3.org/2018/credentials#credentialSubject> <https://zkp-ld.org/.well-known/genid/anonymous/iri#lVhEcU> .
 _:6b83e0ac70e <https://www.w3.org/2018/credentials#expirationDate> "2023-11-12T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 _:6b83e0ac70e <https://www.w3.org/2018/credentials#issuanceDate> "2022-11-12T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
@@ -67,7 +65,6 @@ const document2 = canonize.NQuads.parse(`
 <http://example.org/cityA> <http://schema.org/name> "City A" .
 <http://example.org/cityA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Place> .
 <http://example.org/credentials/3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
-<http://example.org/credentials/3> <https://w3id.org/security#proof> _:6b83e0ac70b .
 <http://example.org/credentials/3> <https://www.w3.org/2018/credentials#credentialSubject> <http://example.org/cityA> .
 <http://example.org/credentials/3> <https://www.w3.org/2018/credentials#expirationDate> "2023-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 <http://example.org/credentials/3> <https://www.w3.org/2018/credentials#issuanceDate> "2022-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
@@ -78,7 +75,6 @@ const revealedDocument2 = canonize.NQuads.parse(`
 <http://example.org/cityA> <http://schema.org/maximumAttendeeCapacity> "https://zkp-ld.org/.well-known/genid/anonymous/literal#ZpJ6Aw"^^<http://www.w3.org/2001/XMLSchema#integer> .
 <http://example.org/cityA> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Place> .
 <http://example.org/credentials/3> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
-<http://example.org/credentials/3> <https://w3id.org/security#proof> _:6b83e0ac70b .
 <http://example.org/credentials/3> <https://www.w3.org/2018/credentials#credentialSubject> <http://example.org/cityA> .
 <http://example.org/credentials/3> <https://www.w3.org/2018/credentials#expirationDate> "2023-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 <http://example.org/credentials/3> <https://www.w3.org/2018/credentials#issuanceDate> "2022-01-01T00:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
