@@ -97,7 +97,7 @@ const anonToTerm = new Map<string, RDF.NamedNode | RDF.BlankNode | RDF.Literal>(
 ]);
 
 const inputDocuments = [
-//  { document: document1, proofs: proofs1, revealedDocument: revealedDocument1, anonToTerm },
+  { document: document1, proofs: proofs1, revealedDocument: revealedDocument1, anonToTerm },
   { document: document2, proofs: proofs2, revealedDocument: revealedDocument2, anonToTerm },
 ];
 
@@ -114,6 +114,6 @@ describe("BbsTermwiseSignatureProof2021", () => {
       documentLoader: customLoader
     });
     expect(derivedProof).toBeDefined();
-    console.dir(derivedProof);
+    console.dir(derivedProof, { depth: 5 });
   });
 });

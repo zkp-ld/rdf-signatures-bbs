@@ -27,7 +27,7 @@ import {
   DeriveProofMultiRDFOptions,
 } from "./types";
 import { BbsTermwiseSignature2021 } from "./BbsTermwiseSignature2021";
-import { Statement, TYPE_NAMED_NODE, XSD_INTEGER } from "./Statement";
+import { Statement, TYPE_NAMED_NODE, XSD_INTEGER, XSD_STRING } from "./Statement";
 import {
   SECURITY_CONTEXT_URLS,
   NUM_OF_TERMS_IN_STATEMENT,
@@ -38,6 +38,7 @@ const PROOF_VALUE_PREDICATE = "https://w3id.org/security#proofValue";
 const VERIFICATION_METHOD_PREDICATE = "https://w3id.org/security#verificationMethod";
 const NONCE_PREDICATE = "https://w3id.org/security#nonce";
 const RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+const RDF_LANGSTRING = "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString";
 const SIGNATURE_TYPE = "https://zkp-ld.org/security#BbsTermwiseSignature2021"
 const PROOF_TYPE = "https://zkp-ld.org/security#BbsTermwiseSignatureProof2021"
 const U8_STRING = 0;
@@ -1246,7 +1247,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const nonce = givenNonce || randomBytes(50);
 
     const termsArray: Uint8Array[][] = [];
-    const revealedIndiciesArray: number[][] = [];
     const revealedTermIndiciesArray: number[][] = [];
     const issuerPublicKeyArray: Buffer[] = [];
     const signatureArray: Buffer[] = [];
@@ -1384,13 +1384,28 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
             algorithm: 'URDNA2015',
             format: "application/nquads"
           });
-        const canonicalizedProofNQuadArray = canonicalizedProofNQuads.split("\n").filter((q) => q !== "");
 
         // Concat proof and document to get terms to be signed
         const statementsNQuads = [canonicalizedProofNQuads, canonicalizedDocumentNQuads].join("\n");
-        const statementsNQuadArray = canonicalizedProofNQuadArray.concat(canonicalizedDocumentNQuadArray);
         const statements: RDF.Quad[] = canonize.NQuads.parse(statementsNQuads);
         const terms = statements.flatMap((quad) => {
+          /**
+           * Escape string to N-Quads literal
+           * (from rdf-canonize/NQuads.js)
+           */
+          const _escape = (s: string): string => {
+            return s.replace(/["\\\n\r]/g, (match: string) => {
+              switch (match) {
+                case '"': return '\\"';
+                case '\\': return '\\\\';
+                case '\n': return '\\n';
+                case '\r': return '\\r';
+              }
+              return match;
+            });
+          }
+
+          // subject
           const subjectValue = quad.subject.termType === "NamedNode"
             ? `<${quad.subject.value}>` : quad.subject.value;
           const subject = new Uint8Array([
@@ -1398,21 +1413,18 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
             ...Buffer.from(subjectValue)
           ]);
 
+          // predicate
           const predicateValue = `<${quad.predicate.value}>`;
           const predicate = new Uint8Array([
             U8_STRING, // shows that this array encodes string
             ...Buffer.from(predicateValue)
           ]);
 
-          const objectValue = quad.object.termType === "NamedNode"
-            ? `<${quad.object.value}>` : quad.object.value;
-          let object = new Uint8Array([
-            U8_STRING, // shows that this array encodes string
-            ...Buffer.from(objectValue)
-          ]);
+          // object
+          let object;
           if (quad.object.termType === "Literal"
             && quad.object.datatype.value === XSD_INTEGER) {
-            const num = parseInt(objectValue);
+            const num = parseInt(quad.object.value);
             if (Number.isSafeInteger(num) && Math.abs(num) < 2 ** 31) {
               object = Uint8Array.of(
                 U8_INTEGER, // shows that this array encodes 32-bit integer (big endian)
@@ -1421,9 +1433,34 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
                 (num & 0x0000ff00) >> 8,
                 (num & 0x000000ff) >> 0
               );
+            } else {
+              throw new Error(`integer must be **safe** integer`);
             }
+          } else {
+            let objectValue;
+            if (quad.object.termType === "NamedNode") {
+              objectValue = `<${quad.object.value}>`;
+            } else if (quad.object.termType === "BlankNode") {
+              objectValue = quad.object.value;
+            } else if (quad.object.termType === "Literal") {
+              objectValue = `"${_escape(quad.object.value)}"`;
+              if (quad.object.datatype.value === RDF_LANGSTRING) {
+                if (quad.object.language) {
+                  objectValue += `@${quad.object.language}`;
+                }
+              } else if (quad.object.datatype.value !== XSD_STRING) {
+                objectValue += `^^<${quad.object.datatype.value}>`;
+              }
+            } else {
+              throw new Error(`invalid term type of ${quad.object.value}: ${quad.object.termType}`);
+            }
+            object = new Uint8Array([
+              U8_STRING, // shows that this array encodes string
+              ...Buffer.from(objectValue)
+            ]);
           }
 
+          // graph
           const graphValue = quad.graph.termType === "NamedNode"
             ? `<${quad.graph.value}>` : quad.graph.value;
           const graph = new Uint8Array([
