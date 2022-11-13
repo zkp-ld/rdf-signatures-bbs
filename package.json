@@ -1,15 +1,15 @@
 {
-  "name": "@zkp-ld/jsonld-signatures-bbs",
+  "name": "@zkp-ld/rdf-signatures-bbs",
   "version": "0.11.15",
   "description": "**Experimental** (do not use in production): Based on MATTR's [jsonld-signatures-bbs](https://github.com/mattrglobal/jsonld-signatures-bbs)",
-  "homepage": "https://github.com/zkp-ld/jsonld-signatures-bbs",
+  "homepage": "https://github.com/zkp-ld/rdf-signatures-bbs",
   "author": "yamdan",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zkp-ld/jsonld-signatures-bbs.git"
+    "url": "git+https://github.com/zkp-ld/rdf-signatures-bbs.git"
   },
   "bugs": {
-    "url": "https://github.com/zkp-ld/jsonld-signatures-bbs/issues"
+    "url": "https://github.com/zkp-ld/rdf-signatures-bbs/issues"
   },
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
