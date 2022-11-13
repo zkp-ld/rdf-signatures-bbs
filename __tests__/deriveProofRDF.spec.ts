@@ -1,29 +1,15 @@
-import jsigs from "jsonld-signatures";
 import * as RDF from "@rdfjs/types";
 import canonize from "rdf-canonize";
 import { DataFactory } from "rdf-data-factory";
 
 import {
   exampleBls12381KeyPair,
-  testRevealDocument,
-  testSignedDocument,
   customLoader,
-  testSignedVcDocument,
-  testRevealVcDocument,
-  testRevealAllVcDocument,
-  testRevealAllDocument,
-  testSignedNestedVcDocument,
-  testNestedRevealFullDocument,
-  testNestedRevealDocument,
-  testRevealVcDocumentInvalid,
-  testRevealDocumentWithUnknownAttributes
 } from "./__fixtures__";
 import {
   Bls12381G2KeyPair,
   BbsTermwiseSignatureProof2021,
-  BbsTermwiseSignature2021
 } from "../src/index";
-import { getProofs } from "../src/utilities";
 
 const key = new Bls12381G2KeyPair(exampleBls12381KeyPair);
 
