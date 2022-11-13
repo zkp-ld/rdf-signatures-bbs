@@ -47,6 +47,7 @@ const U8_INTEGER = 1;
 class URIAnonymizer {
   private prefix = "urn:anon:";
   private regexp = /^<urn:anon:([^>]+)>/;
+  private regexp_url = /^<https:\/\/zkp-ld.org\/.well-known\/genid\/anonymous\/([^>]+)>/;
 
   private equivs: Map<string, [string, [number, number][]]> = new Map();
 
@@ -85,7 +86,7 @@ class URIAnonymizer {
   }
 
   extractAnonID(t: string): string | null {
-    const found = t.match(this.regexp);
+    const found = t.match(this.regexp) || t.match(this.regexp_url);
     if (found === null) return null;
     return found[1];
   }
