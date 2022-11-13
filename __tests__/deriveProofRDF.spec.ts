@@ -92,12 +92,11 @@ describe("BbsTermwiseSignatureProof2021", () => {
   it("should derive and verify proof", async () => {
     const suite = new BbsTermwiseSignatureProof2021({
       useNativeCanonize: false,
-      key
     });
 
     const derivedProof: any = await suite.deriveProofMultiRDF({
       inputDocuments,
-      documentLoader: customLoader
+      documentLoader: customLoader,
     });
     expect(derivedProof).toBeDefined();
     console.dir(derivedProof, { depth: 5 });
