@@ -1253,7 +1253,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const revealedDocuments: RDF.Quad[][] = [];
     const preDerivedProofs: RDF.Quad[][] = [];
     const canonicalizedRevealedStatementsNQuadsArray: string[] = [];
-    const rangeProofIndiciesArray: [number, number, number][][] = [[]];
+    const rangeProofIndiciesArray: [number, number, number][][] = [];
 
     const equivs = new Map<string, [number, number][]>();
 
@@ -1513,6 +1513,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
           });
 
         // TBD: Add proof statements length to rangeproof indicies
+        rangeProofIndiciesArray.push([]);
 
         // Fetch the verification method
         const verificationMethodId = proof
