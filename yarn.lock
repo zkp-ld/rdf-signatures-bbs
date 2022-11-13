@@ -4021,9 +4021,11 @@ rdf-canonize@^3.0.0:
   dependencies:
     setimmediate "^1.0.5"
 
-"rdf-canonize@link:../rdf-canonize":
-  version "0.0.0"
-  uid ""
+rdf-canonize@zkp-ld/rdf-canonize:
+  version "3.3.1-0"
+  resolved "https://codeload.github.com/zkp-ld/rdf-canonize/tar.gz/c8382560c05dfd11f675c1e301666b08788459e7"
+  dependencies:
+    setimmediate "^1.0.5"
 
 rdf-data-factory@^1.1.1:
   version "1.1.1"
