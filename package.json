@@ -1,6 +1,6 @@
 {
   "name": "@zkp-ld/rdf-signatures-bbs",
-  "version": "0.0.2-unstable.b2aaa6a",
+  "version": "0.0.3",
   "description": "**Experimental** (do not use in production): Based on MATTR's [jsonld-signatures-bbs](https://github.com/mattrglobal/jsonld-signatures-bbs)",
   "homepage": "https://github.com/zkp-ld/rdf-signatures-bbs",
   "author": "yamdan",
@@ -69,7 +69,7 @@
     "bs58": "4.0.1",
     "jsonld": "5.2.0",
     "jsonld-signatures": "9.3.0",
-    "rdf-canonize": "zkp-ld/rdf-canonize",
+    "rdf-canonize": "https://github.com/zkp-ld/rdf-canonize.git#add-options",
     "rdf-data-factory": "^1.1.1",
     "uuid": "8.3.2"
   },
