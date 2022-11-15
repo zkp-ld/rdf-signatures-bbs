@@ -1290,19 +1290,22 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         dataset: Set<RDF.Quad>,
         blankToCanon: Map<string, string>
       } = await canonize.canonize(document, {
-        algorithm: 'URDNA2015', withMap: true
+        algorithm: "URDNA2015",
+        format: "application/rdfjs",
+        withMap: true
       });
 
       // Canonicalize the revealed document
       const canonicalizedRevealedDocument: Set<RDF.Quad>
         = await canonize.canonize(revealedDocument, {
-          algorithm: 'URDNA2015'
+          algorithm: "URDNA2015",
+          format: "application/rdfjs",
         });
 
       // Compose anonToTerm and blankToCanon maps
       const anonToCanon = new Map([...anonToTerm.entries()].map(
         ([anon, term]) => [anon,
-          term.termType === 'BlankNode'
+          term.termType === "BlankNode"
             ? rdfdf.blankNode(blankToCanon.get(term.value))
             : term]
       ));
@@ -1331,7 +1334,8 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       const canonicalizedRevealedDocumentNQuads: string
         = canonize.NQuads.serialize([...canonicalizedRevealedDocument]);
       const deAnonymizedCanonicalizedRevealedDocumentNQuads: string
-        = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument);
+        = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument,
+          { sorted: false });
 
       // Get revealed indicies,
       // i.e., statement-wise index mapping
