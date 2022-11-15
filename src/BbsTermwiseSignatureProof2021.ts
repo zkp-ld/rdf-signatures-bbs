@@ -1253,7 +1253,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     const signatureArray: Buffer[] = [];
     const revealedDocuments: RDF.Quad[][] = [];
     const preDerivedProofs: RDF.Quad[][] = [];
-    const canonicalizedRevealedStatementsNQuadsArray: string[] = [];
+    const canonicalizedRevealedStatementsNQuadsArrayForNonceExtension: string[] = [];
     const rangeProofIndiciesArray: [number, number, number][][] = [];
 
     const equivs = new Map<string, [number, number][]>();
@@ -1494,12 +1494,14 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         const canonicalizedRevealedStatementsNQuads
           = [canonicalizedProofNQuads,
             canonicalizedRevealedDocumentNQuads].join("\n");
-        canonicalizedRevealedStatementsNQuadsArray
-          .push(canonicalizedRevealedStatementsNQuads);
         const canonicalizedRevealedStatements: RDF.Quad[]
           = canonize.NQuads.parse(
             canonicalizedRevealedStatementsNQuads
           );
+
+        // store document n-quads for extended nonce
+        canonicalizedRevealedStatementsNQuadsArrayForNonceExtension
+          .push(canonicalizedRevealedDocumentNQuads);
 
         // Push each anonymized term index with its credential index to equivs map
         canonicalizedRevealedStatements
@@ -1573,7 +1575,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     // merge revealed statements into nonce (should be separated as claims?)
     const revealedStatementsByte = new Uint8Array(
       Buffer.from(
-        canonicalizedRevealedStatementsNQuadsArray.join("")
+        canonicalizedRevealedStatementsNQuadsArrayForNonceExtension.join("")
       )
     );
     const mergedNonce = new Uint8Array(
