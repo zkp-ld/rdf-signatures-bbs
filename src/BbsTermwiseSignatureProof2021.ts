@@ -1286,21 +1286,21 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
       }
 
       // Canonicalize the document
-      const { dataset: canonicalizedDocument, blankToCanon }: {
-        dataset: Set<RDF.Quad>,
+      const { dataset: canonicalizedDocumentNQuads, blankToCanon }: {
+        dataset: string,
         blankToCanon: Map<string, string>
       } = await canonize.canonize(document, {
         algorithm: "URDNA2015",
-        format: "application/rdfjs",
         withMap: true
       });
 
       // Canonicalize the revealed document
-      const canonicalizedRevealedDocument: Set<RDF.Quad>
+      const canonicalizedRevealedDocumentNQuads: string
         = await canonize.canonize(revealedDocument, {
           algorithm: "URDNA2015",
-          format: "application/rdfjs",
         });
+      const canonicalizedRevealedDocument: RDF.Quad[]
+        = canonize.NQuads.parse(canonicalizedRevealedDocumentNQuads);
 
       // Compose anonToTerm and blankToCanon maps
       const anonToCanon = new Map([...anonToTerm.entries()].map(
@@ -1329,10 +1329,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
         })
 
       // Serialize and sort documents
-      const canonicalizedDocumentNQuads: string
-        = canonize.NQuads.serialize([...canonicalizedDocument]);
-      const canonicalizedRevealedDocumentNQuads: string
-        = canonize.NQuads.serialize([...canonicalizedRevealedDocument]);
       const deAnonymizedCanonicalizedRevealedDocumentNQuads: string
         = canonize.NQuads.serialize(deAnonymizedCanonicalizedRevealedDocument,
           { sorted: false });
