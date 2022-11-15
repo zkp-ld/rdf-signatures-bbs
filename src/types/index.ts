@@ -33,3 +33,4 @@ export {
   CanonicalizeResult
 } from "./BbsBlsSignatureProof2020AdditionalTypes";
 export { DeriveProofMultiOptions } from "./DeriveProofMultiOptions";
+export { DeriveProofMultiRDFOptions } from "./DeriveProofMultiRDFOptions";
