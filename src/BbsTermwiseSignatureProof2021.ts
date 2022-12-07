@@ -48,7 +48,7 @@ class URIAnonymizer {
   private prefix = "urn:anon:";
   private regexp = /^<urn:anon:([^>]+)>/;
   private regexp_url = /^<https:\/\/zkp-ld.org\/\.well-known\/genid\/anonymous\/([^>]+)>$/;
-  private regexp_literal = /^"https:\/\/zkp-ld.org\/\.well-known\/genid\/anonymous\/([^"]+)"$/;
+  private regexp_literal = /^"https:\/\/zkp-ld.org\/\.well-known\/genid\/anonymous\/([^"]+)"/;
 
   private equivs: Map<string, [string, [number, number][]]> = new Map();
 
