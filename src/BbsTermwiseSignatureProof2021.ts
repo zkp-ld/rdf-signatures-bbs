@@ -33,6 +33,7 @@ import {
   NUM_OF_TERMS_IN_STATEMENT,
   KEY_FOR_RANGEPROOF
 } from "./utilities";
+import { DerivedProof } from "./types/DerivedProof";
 
 const PROOF_VALUE_PREDICATE = "https://w3id.org/security#proofValue";
 const VERIFICATION_METHOD_PREDICATE = "https://w3id.org/security#verificationMethod";
@@ -1220,7 +1221,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
    * @returns {Promise<object[]>} Resolves with the array of derived proofs object.
    */
   // eslint-disable-next-line @typescript-eslint/ban-types
-  async deriveProofMultiRDF(options: DeriveProofMultiRDFOptions): Promise<object[]> {
+  async deriveProofMultiRDF(options: DeriveProofMultiRDFOptions): Promise<DerivedProof[]> {
     const {
       inputDocuments,
       documentLoader,
@@ -1583,9 +1584,12 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     });
 
     // Set the proof value on the derived proof
-    const results = [];
+    const results: DerivedProof[] = [];
     for (const numberOfProof of numberOfProofs) {
       const revealedDocument = revealedDocuments.shift();
+      if (revealedDocument == null) {
+        throw new Error("internal error");  // FIXME
+      }
       const derivedProofs = [];
 
       for (let _ = 0; _ < numberOfProof; _++) {
@@ -1624,7 +1628,7 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
 
       results.push({
         document: revealedDocument,
-        proof: derivedProofs
+        proofs: derivedProofs
       });
     }
 
