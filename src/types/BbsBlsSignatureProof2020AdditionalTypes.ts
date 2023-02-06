@@ -11,7 +11,7 @@
  * limitations under the License.
  */
 
-import { Statement } from "src/Statement";
+import { Statement } from "../Statement";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CanonicalizeOptions {

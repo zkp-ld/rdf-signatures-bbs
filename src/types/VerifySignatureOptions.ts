@@ -11,7 +11,7 @@
  * limitations under the License.
  */
 
-import { DidDocumentPublicKey } from "src";
+import { DidDocumentPublicKey } from "../";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
