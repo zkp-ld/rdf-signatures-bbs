@@ -116,24 +116,6 @@ export class BbsTermwiseSignatureProof2021 extends suites.LinkedDataProof {
     this.Suite = BbsTermwiseSignature2021;
   }
 
-  // ported from
-  // https://github.com/transmute-industries/verifiable-data/blob/main/packages/bbs-bls12381-signature-2020/src/BbsBlsSignatureProof2020.ts
-  ensureSuiteContext({ document }: any): void {
-    const contextUrl = "https://zkp-ld.org/bbs-termwise-2021.jsonld";
-    if (
-      document["@context"] === contextUrl ||
-      (Array.isArray(document["@context"]) &&
-        document["@context"].includes(contextUrl))
-    ) {
-      // document already includes the required context
-      return;
-    }
-    throw new TypeError(
-      `The document to be signed must contain this suite's @context, ` +
-      `"${contextUrl}".`
-    );
-  }
-
   async canonize(input: any, options: CanonizeOptions): Promise<string> {
     const { documentLoader, expansionMap, skipExpansion } = options;
     return jsonld.canonize(input, {
